@@ -434,6 +434,17 @@
   .widget-aus { display: none; }
   #seite.widgets-bearbeiten .widget-aus { display: block; opacity: .45; }
   #widgets-bearbeiten { margin: 0 0 12px; }
+  @keyframes wackeln { 0% { transform: rotate(-.45deg); } 50% { transform: rotate(.45deg); } 100% { transform: rotate(-.45deg); } }
+  #seite.widgets-bearbeiten .widget:not(.zieht) > :not(.widget-steuer) { animation: wackeln .28s ease-in-out infinite; }
+  #seite.widgets-bearbeiten .widget:nth-child(2n):not(.zieht) > :not(.widget-steuer) { animation-duration: .31s; animation-direction: reverse; }
+  body.ruhe #seite.widgets-bearbeiten .widget > :not(.widget-steuer) { animation: none; }
+  .widget-steuer { cursor: grab; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .widget-steuer .griff { flex: none; margin-right: 8px; color: var(--leise); letter-spacing: -2px; }
+  .widget.zieht { position: relative; z-index: 30; cursor: grabbing; transition: none; }
+  .widget.zieht > :not(.widget-steuer) { transform: scale(1.035); box-shadow: 0 18px 44px rgba(0,0,0,.28); }
+  .widget.zieht .widget-steuer { cursor: grabbing; }
+  .widget.landet { transition: transform .32s var(--feder); }
+  @media (prefers-reduced-motion: reduce) { #seite.widgets-bearbeiten .widget > :not(.widget-steuer) { animation: none; } }
   #widget-neu { display: none; margin: 0 0 12px 8px; }
   #seite.widgets-bearbeiten #widget-neu { display: inline-flex; }
   #widgets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }

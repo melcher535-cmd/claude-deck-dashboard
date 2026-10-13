@@ -16,6 +16,7 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Notifications](#notifications)
+- [Install as a phone app (iOS and Android)](#install-as-a-phone-app-ios-and-android)
 - [Limits and automatic reset](#limits-and-automatic-reset)
 - [Languages](#languages)
 - [Security](#security)
@@ -31,7 +32,7 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 - Usage history with a forecast ("full in about N hours"), consumption share per session, error patterns
 - Chat view per session (messenger style, coloured diffs for edits), filters, Markdown export, session compare
 - Pin sessions with a note, copy `claude --resume <id>`
-- **Custom widgets** on the overview: Customize → *Widget hinzufügen*. Pick one of 23 sources (limits, costs, tokens, sessions, errors, health, certificate, disk, memory, CPU, services, repositories, mailbox, notes, backups ...), a look (number, ring, line, bars, list), a range and a width, with a live preview. Widgets and their order are stored on the server (`widgets.json`) and apply on every device
+- **Custom widgets** on the overview: Customize → *Widget hinzufügen*. Pick one of 23 sources (limits, costs, tokens, sessions, errors, health, certificate, disk, memory, CPU, services, repositories, mailbox, notes, backups ...), a look (number, ring, line, bars, list), a range and a width, with a live preview. **Drag and drop like on the iPhone:** in *Anpassen* mode the widgets wiggle, grab one by its header bar and drag it, the others move out of the way and the widget snaps into the grid. Widgets and their order are stored on the server (`widgets.json`) and apply on every device
 
 **Notifications**
 - Warnings at 80 % and 95 % of a limit, a forecast warning, a message when a limit **resets** and when a watched session finishes
@@ -301,6 +302,54 @@ Messages you can get:
 | Session finished | You set an alarm on a running session |
 | Daily report | 20:00 Europe/Berlin (ntfy only) |
 | IP locked | Too many failed logins |
+
+## Install as a phone app (iOS and Android)
+
+The dashboard is a progressive web app (PWA): a web manifest, home-screen icons and a service worker are included. Installed, it opens full screen without browser bars, has its own icon, and can receive push notifications. Nothing to build and no app store needed.
+
+**Before you start**
+- The dashboard must be reachable over **HTTPS** with a valid certificate (see [Installation](#installation) steps 8 and 9). Over plain HTTP the install option and Web Push do not work.
+- `DECK_DOMAIN` in `.env` must be your host name (it is used for Web Push).
+- Open the address in the phone's own browser and sign in once.
+
+### iPhone and iPad (iOS 16.4 or newer)
+
+1. Open `https://deck.example.com` in **Safari**. Other iOS browsers can add it too (iOS 16.4+), but Safari is the safest choice.
+2. Tap the **Share** button (square with an arrow).
+3. Scroll down and tap **Add to Home Screen**. In newer iOS versions keep *Open as Web App* switched on.
+4. Tap **Add**. The Claude Deck icon appears on the home screen.
+5. Open the app from the home screen and **sign in again**: the home-screen app has its own cookies and does not share the Safari login. Switch on *Stay signed in* to avoid typing the password often.
+6. For push messages: in the app go to **Konto → Benachrichtigungen** and switch it on, then allow notifications in the iOS prompt.
+
+Tips and limits
+- Push on iOS works **only** from the home-screen app, never from a normal Safari tab.
+- The icon is cached by iOS. If you change the icon, delete the app from the home screen and add it again.
+- If the layout looks zoomed out, close the app completely and reopen it.
+
+### Android (Chrome, Edge, Samsung Internet)
+
+1. Open `https://deck.example.com` in **Chrome** and sign in.
+2. Tap the **⋮ menu** and choose **Install app** (on some versions: **Add to Home screen**). Confirm with **Install**.
+3. Open the app from the launcher or the home screen and sign in again if asked. Switch on *Stay signed in*.
+4. For push messages: in the app go to **Konto → Benachrichtigungen**, switch it on and allow notifications.
+
+Tips and limits
+- Samsung Internet and Edge offer the same via the menu (*Add page to* → *Home screen*, or *Install*).
+- On Android push also works in a normal Chrome tab, but the installed app is more reliable.
+- Battery optimisation can delay push. If messages arrive late, set the app to *Unrestricted* in the Android battery settings.
+
+### Check that it works
+
+- Open the app: there should be no browser address bar.
+- **Konto → Benachrichtigungen → Testnachricht**: a notification should arrive within seconds.
+- Nothing arrives? Check that the domain uses HTTPS, `DECK_DOMAIN` is correct, notifications are allowed for the app in the phone settings, and (iOS) that you opened the home-screen app, not Safari.
+
+### Remove the app
+
+- **iOS:** touch and hold the icon → *Remove App* → *Delete App*.
+- **Android:** touch and hold the icon → *Uninstall* (or *Remove*).
+
+The data stays on your server; only the shortcut and the local login are removed.
 
 ## Limits and automatic reset
 

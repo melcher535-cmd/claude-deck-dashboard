@@ -358,6 +358,50 @@ async function widgetLayoutLaden() {
     return layout;
   } catch (e) { console.warn("Widgets nicht ladbar:", e); return vorgabe; }
 }
+const ZIEH_SCHWELLE = 4;
+const FEDER = "cubic-bezier(.32,.72,0,1)";
+// Ziehen wie auf dem iPhone: Widget an der Kopfleiste fassen, die anderen weichen aus (FLIP), beim Loslassen rastet es im Raster ein
+function widgetZiehen(buehne, speichern) {
+  const ruhig = () => document.body.classList.contains("ruhe") || matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const sichtbar = () => [...buehne.children].filter(w => getComputedStyle(w).display !== "none");
+  buehne.addEventListener("pointerdown", e => {
+    const kopf = e.target.closest(".widget-steuer");
+    if (!kopf || e.target.closest("button") || !document.getElementById("seite").classList.contains("widgets-bearbeiten") || e.button > 0) return;
+    const s = kopf.closest(".widget");
+    const start = { x: e.clientX, y: e.clientY, ziehen: false, versatz: null };
+    const natuerlich = () => { s.style.transform = ""; return s.getBoundingClientRect(); };
+    const bewegen = ev => {
+      if (!start.ziehen) {
+        if (Math.hypot(ev.clientX - start.x, ev.clientY - start.y) < ZIEH_SCHWELLE) return;
+        start.ziehen = true; s.classList.add("zieht"); s.classList.remove("landet");
+        const r = natuerlich(); start.versatz = { x: start.x - r.left, y: start.y - r.top };
+        if (navigator.vibrate) navigator.vibrate(8);
+      }
+      const r = natuerlich();
+      const ziel = sichtbar().find(w => { if (w === s) return false; const b = w.getBoundingClientRect(); return ev.clientX > b.left && ev.clientX < b.right && ev.clientY > b.top && ev.clientY < b.bottom; });
+      if (ziel) {
+        const alle = sichtbar(), vorher = new Map(alle.filter(w => w !== s).map(w => [w, w.getBoundingClientRect()]));
+        alle.indexOf(ziel) < alle.indexOf(s) ? ziel.before(s) : ziel.after(s);
+        if (!ruhig()) for (const [w, alt] of vorher) {
+          const neu = w.getBoundingClientRect(), dx = alt.left - neu.left, dy = alt.top - neu.top;
+          if (dx || dy) w.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }], { duration: 320, easing: FEDER });
+        }
+      }
+      const slot = natuerlich();
+      s.style.transform = `translate(${ev.clientX - start.versatz.x - slot.left}px, ${ev.clientY - start.versatz.y - slot.top}px)`;
+      const rand = 80;
+      if (ev.clientY < rand) scrollBy(0, -14); else if (ev.clientY > innerHeight - rand) scrollBy(0, 14);
+    };
+    const ende = ev => {
+      removeEventListener("pointermove", bewegen); removeEventListener("pointerup", ende); removeEventListener("pointercancel", ende);
+      if (!start.ziehen) return;
+      s.classList.add("landet"); s.style.transform = "";
+      setTimeout(() => s.classList.remove("zieht", "landet"), ruhig() ? 0 : 330);
+      speichern();
+    };
+    addEventListener("pointermove", bewegen); addEventListener("pointerup", ende); addEventListener("pointercancel", ende);  // am window: Umsortieren im DOM beendet jeden Pointer-Capture
+  });
+}
 let widgetsLaden = false, widgetTimer = null;
 async function widgetsAnwenden() {
   const seite = document.getElementById("seite");
@@ -398,7 +442,7 @@ async function widgetsAnwenden() {
     s.querySelector(".widget-steuer") && s.querySelector(".widget-steuer").remove();
     const id = s.dataset.widget, w = eigen(id), name = w ? w.title : WIDGET_NAMEN[id];
     const eigene = w ? '<button type="button" data-a="bearbeiten">Bearbeiten</button><button type="button" data-a="loeschen">Löschen</button>' : "";
-    s.insertAdjacentHTML("afterbegin", `<div class="widget-steuer"><b>${esc(name)}</b><span>${eigene}<button type="button" data-a="hoch" aria-label="Nach oben">↑</button><button type="button" data-a="runter" aria-label="Nach unten">↓</button><button type="button" data-a="aus">${s.classList.contains("widget-aus") ? "Einblenden" : "Ausblenden"}</button></span></div>`);
+    s.insertAdjacentHTML("afterbegin", `<div class="widget-steuer"><b><span class="griff" aria-hidden="true">⋮⋮</span>${esc(name)}</b><span>${eigene}<button type="button" data-a="hoch" aria-label="Nach oben">↑</button><button type="button" data-a="runter" aria-label="Nach unten">↓</button><button type="button" data-a="aus">${s.classList.contains("widget-aus") ? "Einblenden" : "Ausblenden"}</button></span></div>`);
   };
   for (const name of ordnung) if (alle[name]) { buehne.appendChild(alle[name]); alle[name].classList.toggle("widget-aus", layout.hidden.includes(name)); steuer(alle[name]); }
   const knopf = document.createElement("button"); knopf.className = "tab"; knopf.type = "button"; knopf.id = "widgets-bearbeiten"; knopf.textContent = "Anpassen";
@@ -422,6 +466,7 @@ async function widgetsAnwenden() {
     }
     speichern();
   };
+  widgetZiehen(buehne, speichern);
   clearInterval(widgetTimer);
   widgetTimer = setInterval(() => { if (document.getElementById("widgets")) widgetsAktualisieren(layout.custom); else clearInterval(widgetTimer); }, WIDGET_TAKT_MS);
 }
