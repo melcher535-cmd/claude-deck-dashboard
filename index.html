@@ -303,6 +303,13 @@
   .stepper { display: inline-flex; align-items: center; border-radius: 9px; background: var(--fuellung); }
   .stepper button { width: 42px; height: 30px; padding: 0; border: 0; background: none; color: var(--text); font-size: 1.125rem; cursor: pointer; border-radius: 9px; }
   .stepper button:active { background: var(--fuellung2); }
+  .auswahlknopf { display: inline-flex; align-items: center; gap: 8px; min-height: 30px; padding: 0 9px 0 13px; border: 0; border-radius: 9px; background: var(--fuellung); color: var(--text); font: inherit; cursor: pointer; transition: background .2s var(--feder), transform .2s var(--feder); }
+  .auswahlknopf:active { transform: scale(.96); background: var(--fuellung2); }
+  .auswahlknopf[aria-expanded="true"] { background: var(--fuellung2); }
+  .auswahlknopf svg { width: 9px; height: 14px; color: var(--leise); }
+  .kontextmenue button.mit-haken { display: flex; align-items: center; gap: 8px; }
+  .kontextmenue .haken { flex: none; width: 14px; height: 14px; opacity: 0; }
+  .kontextmenue [aria-checked="true"] .haken { opacity: 1; }
   .stepper output { min-width: 62px; padding: 0 6px; border-inline: .5px solid var(--trenner); font-variant-numeric: tabular-nums; line-height: 30px; text-align: center; }
   .farbpunkte { display: flex; gap: 12px; }
   .farbpunkte button { width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; transition: transform .15s var(--feder); }
@@ -915,14 +922,17 @@ const stepperZeile = (id, titel, wert, einheit) => `<div class="zeile"><div>${ti
 function darstellungKarte() {
   const e = einstellungen, dunkel = document.documentElement.dataset.theme !== "hell", akzent = document.documentElement.dataset.akzent;
   const punkte = [["blau", "#0071e3"], ["violett", "#af52de"], ["orange", "#ff9500"], ["gruen", "#34c759"]].map(([n, f]) => `<button type="button" data-akzent="${n}" style="background:${f}" aria-label="Akzentfarbe ${n}" class="${akzent === n ? "aktiv" : ""}"></button>`).join("");
-  const sprache = `<div class="zeile"><div>Sprache / Language</div><select id="s-sprache" class="auswahl" aria-label="Sprache / Language">${DECK_I18N.liste().map(([c, n]) => `<option value="${c}"${c === DECK_I18N.code ? " selected" : ""}>${n}</option>`).join("")}</select></div>`;
+  const sprachen = DECK_I18N.liste(), sprachName = (sprachen.find(([c]) => c === DECK_I18N.code) || [])[1];
+  const sprache = `<div class="zeile"><div>Sprache / Language</div><button type="button" id="s-sprache" class="auswahlknopf" aria-haspopup="menu" aria-expanded="false" aria-label="Sprache / Language"><span>${sprachName}</span>${AUSWAHL_PFEIL}</button></div>`;
   return karte("Darstellung", sprache + schalterZeile("s-dunkel", "Dunkles Design", "Sonst folgt es dem System", dunkel) + schalterZeile("s-nav", "Seitenleiste", "", !document.body.classList.contains("nav-zu")) +
     schalterZeile("s-glas", "Glas-Effekte", "Unschärfe und Lichtkanten", e.glas) + schalterZeile("s-bew", "Bewegung", "Animationen und Übergänge", e.bewegung) + schalterZeile("s-ticker", "Live-Leiste", "Letzte Aktion laufender Sessions", e.ticker) +
     stepperZeile("t-takt", "Aktualisierung", e.takt, " s") + stepperZeile("t-schrift", "Schriftgröße", e.schrift, " %") + `<div class="zeile"><div>Akzentfarbe</div><div class="farbpunkte">${punkte}</div></div>`);
 }
 function darstellungVerdrahten() {
   const schalten = (id, aktion) => { const el = document.getElementById(id); el.onclick = () => { const an = el.getAttribute("aria-checked") !== "true"; el.setAttribute("aria-checked", an); aktion(an); }; };
-  document.getElementById("s-sprache").onchange = e => DECK_I18N.setzen(e.target.value);
+  const knopf = document.getElementById("s-sprache");
+  knopf.onpointerdown = () => { knopf.dataset.war = document.querySelector(".kontextmenue") ? "1" : ""; };
+  knopf.onclick = () => { if (knopf.dataset.war) { knopf.dataset.war = ""; return; } auswahlMenue(knopf, DECK_I18N.liste(), DECK_I18N.code, code => code !== DECK_I18N.code && DECK_I18N.setzen(code)); };
   schalten("s-dunkel", an => themaSetzen(!an));
   schalten("s-nav", an => { document.body.classList.toggle("nav-zu", !an); speichern("deck-nav", an ? "offen" : "zu"); });
   schalten("s-glas", an => einstellungSetzen("glas", an));
@@ -1215,6 +1225,30 @@ function palettenGeste(palette, griff, schliessen) {
 }
 
 // Kontextmenue: Rechtsklick oder langes Druecken auf eine Session
+const AUSWAHL_PFEIL = '<svg viewBox="0 0 10 14" aria-hidden="true"><path d="M1.5 5 5 1.5 8.5 5M1.5 9 5 12.5 8.5 9" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const AUSWAHL_HAKEN = '<svg class="haken" viewBox="0 0 14 14" aria-hidden="true"><path d="M2 7.5 5.5 11 12 3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+// Aufklappmenue wie bei Apple: Knopf mit Pfeilen, darunter ein Glasmenue mit Haken an der aktuellen Wahl
+function auswahlMenue(knopf, eintraege, aktuell, waehlen) {
+  menueSchliessen();
+  const menue = document.createElement("div");
+  menue.className = "kontextmenue";
+  menue.setAttribute("role", "menu");
+  menue.innerHTML = eintraege.map(([wert, text]) => `<button type="button" role="menuitemradio" class="mit-haken" aria-checked="${wert === aktuell}" data-wert="${esc(wert)}">${AUSWAHL_HAKEN}<span>${esc(text)}</span></button>`).join("");
+  document.body.appendChild(menue);
+  const r = knopf.getBoundingClientRect();
+  menue.style.minWidth = Math.max(170, r.width) + "px";
+  menue.style.left = Math.max(8, Math.min(r.right - menue.offsetWidth, innerWidth - menue.offsetWidth - 8)) + "px";
+  menue.style.top = Math.max(8, Math.min(r.bottom + 6, innerHeight - menue.offsetHeight - 8)) + "px";
+  knopf.setAttribute("aria-expanded", "true");
+  new MutationObserver((_, o) => { if (!menue.isConnected) { knopf.setAttribute("aria-expanded", "false"); o.disconnect(); } }).observe(document.body, { childList: true });
+  menue.onclick = e => { const b = e.target.closest("button"); if (b) { menueSchliessen(); waehlen(b.dataset.wert); } };
+  menue.onkeydown = e => {
+    const knoepfe = [...menue.querySelectorAll("button")], i = knoepfe.indexOf(document.activeElement);
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); knoepfe[(i + (e.key === "ArrowDown" ? 1 : -1) + knoepfe.length) % knoepfe.length].focus(); }
+    else if (e.key === "Escape") { menueSchliessen(); knopf.focus(); }
+  };
+  (menue.querySelector('[aria-checked="true"]') || menue.querySelector("button")).focus();
+}
 function menueSchliessen() { document.querySelectorAll(".kontextmenue").forEach(m => m.remove()); }
 function menueOeffnen(x, y, id) {
   menueSchliessen();
