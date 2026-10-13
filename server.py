@@ -580,7 +580,7 @@ PAGES = {"/": f"{HERE}/index.html", "/graph.html": f"{VAULT}/graphify-out/graph.
 SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
 PUBLIC = {  # App-Symbol und Manifest brauchen keine Anmeldung: iOS holt sie beim "Zum Home-Bildschirm"
     "/manifest.webmanifest": (f"{HERE}/manifest.webmanifest", "application/manifest+json"),
-    "/sw.js": (f"{HERE}/sw.js", "text/javascript"), "/icon-180.png": (f"{HERE}/icon-180.png", "image/png"),
+    "/sw.js": (f"{HERE}/sw.js", "text/javascript"), "/i18n.js": (f"{HERE}/i18n.js", "text/javascript"), "/i18n-en.js": (f"{HERE}/i18n-en.js", "text/javascript"), "/icon-180.png": (f"{HERE}/icon-180.png", "image/png"),
     "/favicon-32.png": (f"{HERE}/favicon-32.png", "image/png"), "/favicon-64.png": (f"{HERE}/favicon-64.png", "image/png"), "/maskable-512.png": (f"{HERE}/maskable-512.png", "image/png"), "/icon-192.png": (f"{HERE}/icon-192.png", "image/png"), "/icon-512.png": (f"{HERE}/icon-512.png", "image/png"),
 }
 DAY_SECONDS = 86400

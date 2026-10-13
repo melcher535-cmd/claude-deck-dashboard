@@ -497,6 +497,8 @@
 </main>
 </div>
 <div id="toasts" role="status" aria-live="polite"></div>
+<script src="/i18n-en.js"></script>
+<script src="/i18n.js"></script>
 <script src="/qrcode.js"></script>
 <script>
 const FARBEN = ["#0a84ff", "#ff9f0a", "#30d158", "#ffd60a", "#bf5af2", "#ff453a", "#64d2ff", "#8e8e93"];
@@ -548,7 +550,7 @@ function linien(reihen) {
   const x = t => L + (t - tmin) / ((tmax - tmin) || 1) * (W - L - 8), y = p => 8 + (H - B - 8) * (1 - p / 100);
   const gitter = [0, 50, 100].map(p => `<line x1="${L}" x2="${W}" y1="${y(p)}" y2="${y(p)}" stroke="var(--trenner)"/><text x="${L - 6}" y="${y(p) + 4}" text-anchor="end">${p} %</text>`).join("");
   const kurven = reihen.map(r => `<polyline fill="none" stroke="${r.farbe}" stroke-width="2" points="${r.punkte.map(([t, p]) => `${x(t)},${y(p)}`).join(" ")}"/>`).join("");
-  const zeit = t => new Date(t).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const zeit = t => new Date(t).toLocaleString(DECK_LOCALE, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
   const punkte = reihen.map(r => r.punkte.map(([t, p]) => `<circle cx="${x(t)}" cy="${y(p)}" r="3.5" fill="${r.farbe}"/><circle cx="${x(t)}" cy="${y(p)}" r="10" fill="transparent" data-tip="${r.name}: ${p} % (${zeit(t)})"/>`).join("")).join("");
   const legende = reihen.map(r => `<li><span class="punkt" style="background:${r.farbe}"></span>${esc(r.name)}</li>`).join("");
   return `<svg viewBox="0 0 ${W} ${H}">${gitter}${kurven}${punkte}<text x="${L}" y="${H - 6}">${zeit(tmin)}</text><text x="${W}" y="${H - 6}" text-anchor="end">${zeit(tmax)}</text></svg><ul class="legende" style="margin-top:8px">${legende}</ul>` +
@@ -577,8 +579,8 @@ function pinKarte(s, p) {
 function heuteKarten(s, v) {
   const tag = d => (s.daily.find(([k]) => k === d) || [0, { sessions: 0, messages: 0, output: 0 }])[1], sp = k => s.daily.slice(-14).map(([, z]) => z[k]);
   const heute = tag(new Date().toISOString().slice(0, 10)), gestern = tag(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
-  return `<p class="kleinzeile">Heute</p><div class="raster kpis">${stat(heute.sessions, "Sessions", `gestern ${gestern.sessions}`, sp("sessions"))}${stat(heute.messages, "Nachrichten von dir", `gestern ${gestern.messages}`, sp("messages"))}` +
-    `${stat(fmt(heute.output), "Output-Tokens", `gestern ${fmt(gestern.output)}`, sp("output"))}${stat(v.today_notes, "Notizen geändert", "im Vault")}</div><p class="kleinzeile">Gesamt</p>`;
+  return `<p class="kleinzeile" data-abschnitt="heute">Heute</p><div class="raster kpis">${stat(heute.sessions, "Sessions", `gestern ${gestern.sessions}`, sp("sessions"))}${stat(heute.messages, "Nachrichten von dir", `gestern ${gestern.messages}`, sp("messages"))}` +
+    `${stat(fmt(heute.output), "Output-Tokens", `gestern ${fmt(gestern.output)}`, sp("output"))}${stat(v.today_notes, "Notizen geändert", "im Vault")}</div><p class="kleinzeile" data-abschnitt="gesamt">Gesamt</p>`;
 }
 async function postJson(url, body) {
   const antwort = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "X-Deck": "1" }, body: JSON.stringify(body) });
@@ -633,7 +635,7 @@ const SEITEN = {
   "sessions/modelle": ["Claude Code", "Modelle", ({ s }) =>
     `<div class="raster zwei">${karte("Output nach Modell", ring(s.by_model.map(([m, v]) => [modell(m), v])))}${karte("Tokens", balkenzeilen(s.by_model.filter(([, v]) => v > 0).map(([m, v]) => [modell(m), v])))}</div>`],
   "sessions/liste": ["Claude Code", "Alle Sessions", ({ s, p }) => `<div class="karte tabelle"><table><thead><tr><th>Titel</th><th class="nur-gross">Modell</th><th>Zuletzt</th><th class="r nur-gross">Nachr.</th><th class="r">Output</th></tr></thead><tbody>` +
-    s.sessions.map(r => `<tr class="klick" onclick="location.hash='chat/${esc(r.id)}'" data-session="${esc(r.id)}"><td>${(p[r.id] || {}).pinned ? "★ " : ""}${esc(r.title || r.id.slice(0, 8))}${(p[r.id] || {}).note ? `<br><span class="leise">${esc(p[r.id].note)}</span>` : ""}</td><td class="leise nur-gross">${esc(modell(r.models.join(", ")))}</td><td class="leise">${r.last ? new Date(r.last).toLocaleString("de-DE") : ""}</td>` +
+    s.sessions.map(r => `<tr class="klick" onclick="location.hash='chat/${esc(r.id)}'" data-session="${esc(r.id)}"><td>${(p[r.id] || {}).pinned ? "★ " : ""}${esc(r.title || r.id.slice(0, 8))}${(p[r.id] || {}).note ? `<br><span class="leise">${esc(p[r.id].note)}</span>` : ""}</td><td class="leise nur-gross">${esc(modell(r.models.join(", ")))}</td><td class="leise">${r.last ? new Date(r.last).toLocaleString(DECK_LOCALE) : ""}</td>` +
       `<td class="r nur-gross">${r.messages}</td><td class="r">${fmt(r.output)}</td></tr>`).join("") + "</tbody></table></div>"],
   "sessions/projekte": ["Claude Code", "Projekte", ({ s }) => karte(`${s.projects.length} Ordner`, `<table><thead><tr><th>Ordner</th><th class="r">Sessions</th><th class="r">Nachr.</th><th class="r">Output</th></tr></thead><tbody>` +
     s.projects.map(([cwd, p]) => `<tr><td class="mono">${esc(cwd)}</td><td class="r">${p.sessions}</td><td class="r">${p.messages}</td><td class="r">${fmt(p.output)}</td></tr>`).join("") + "</tbody></table>")],
@@ -658,7 +660,7 @@ const SEITEN = {
   "konfig/gedaechtnis": ["Konfiguration", "Gedächtnis & Regeln", ({ c }) =>
     `<div class="raster zwei">${karte(`${c.memory.length} Gedächtnis-Dateien`, beschreibung(c.memory))}${karte(`${c.rules.length} Regeldateien`, `<ul>${c.rules.map(r => `<li class="mono">${esc(r)}</li>`).join("")}</ul>`)}</div>`],
   "konfig/backups": ["Konfiguration", "Backups", ({ b }) => karte(`${b.length} Sicherungen (nur Ansicht)`, `<table><thead><tr><th>Pfad</th><th>Art</th><th class="r">Größe</th><th>Geändert</th></tr></thead><tbody>` +
-    b.map(i => `<tr><td class="mono">${esc(i.path)}</td><td class="leise">${i.dir ? "Ordner" : "Datei"}</td><td class="r">${bytes(i.size)}</td><td class="leise">${new Date(i.mtime * 1000).toLocaleString("de-DE")}</td></tr>`).join("") + "</tbody></table>")],
+    b.map(i => `<tr><td class="mono">${esc(i.path)}</td><td class="leise">${i.dir ? "Ordner" : "Datei"}</td><td class="r">${bytes(i.size)}</td><td class="leise">${new Date(i.mtime * 1000).toLocaleString(DECK_LOCALE)}</td></tr>`).join("") + "</tbody></table>")],
   "konfig/harnesses": ["Konfiguration", "Harnesses", ({ k }) => karte("Installierte Werkzeuge", `<table>${k.harnesses.map(([n, p]) =>
     `<tr><td>${esc(n)}</td><td>${p ? '<span style="color:var(--ok)">installiert</span>' : '<span class="leise">nicht gefunden</span>'}</td><td class="leise mono">${esc(p || "")}</td></tr>`).join("")}</table>`)],
   "sessions/verbrauch": ["Claude Code", "Verbrauch", ({ x }) => `<div class="raster zwei">` +
@@ -667,7 +669,7 @@ const SEITEN = {
       '<p class="kontext">Tokens = neuer Input + Output. Das ist kein Prozentwert deines Limits.</p>') + karte("Werkzeug-Aufrufe gesamt", balkenzeilen(x.tools)) + "</div>", "/api/ranking"],
   "sessions/fehler": ["Claude Code", "Fehler", ({ x }) => `<div class="raster kpis">${stat(x.total, "Fehlgeschlagene Aufrufe", "über alle Sessions")}</div><div class="raster zwei">` +
     karte("Fehler nach Werkzeug", balkenzeilen(x.by_tool)) + karte(`Neueste ${x.errors.length}`, `<table>${x.errors.map(e => `<tr class="klick" onclick="location.hash='chat/${esc(e.id)}'" data-session="${esc(e.id)}"><td><b>${esc(e.tool)}</b> ` +
-      `<span class="leise">· ${esc(e.title || e.id.slice(0, 8))} · ${e.ts ? new Date(e.ts).toLocaleString("de-DE") : ""}</span><br><span class="leise mono">${esc(e.text.slice(0, 160))}</span></td></tr>`).join("")}</table>`) + "</div>", "/api/errors"],
+      `<span class="leise">· ${esc(e.title || e.id.slice(0, 8))} · ${e.ts ? new Date(e.ts).toLocaleString(DECK_LOCALE) : ""}</span><br><span class="leise mono">${esc(e.text.slice(0, 160))}</span></td></tr>`).join("")}</table>`) + "</div>", "/api/errors"],
   "vault/ordner": ["Obsidian · graphify", "Ordner", ({ x }) => karte(`${bytes(x.size)} in ${x.files} Dateien`, `<div class="baum">${baum(x, true)}</div>`), "/api/vault-tree"],
   "vault/gesundheit": ["Obsidian · graphify", "Gesundheit", ({ x }) => {
     const liste = (titel, gesamt, eintraege, hinweis) => karte(`${titel}: ${gesamt}`, `<p class="kontext">${hinweis}</p><ul>${eintraege.map(f => `<li class="mono">${esc(f)}</li>`).join("")}</ul>` +
@@ -678,7 +680,7 @@ const SEITEN = {
   }, "/api/vault-health"],
   "vault/uebersicht": ["Obsidian · graphify", "Übersicht", ({ v }) =>
     `<div class="raster kpis">${stat(v.notes, "Notizen", "Markdown im Vault")}${stat(v.nodes, "Graph-Knoten", `${v.edges} Kanten`)}` +
-    `${stat(v.communities.length, "Communities", "größte zuerst")}${stat(new Date(v.graph_built * 1000).toLocaleDateString("de-DE"), "Graph gebaut", "Stand von graph.json")}` +
+    `${stat(v.communities.length, "Communities", "größte zuerst")}${stat(new Date(v.graph_built * 1000).toLocaleDateString(DECK_LOCALE), "Graph gebaut", "Stand von graph.json")}` +
     `${stat(v.stale_notes, "Notizen neuer als Graph", v.stale_notes ? "Aktualisieren: graphify &lt;vault&gt; --update" : "Graph ist aktuell")}</div>` +
     `<div class="raster zwei">${karte("Knotentypen", ring(v.types))}${karte("Kanten nach Sicherheit", ring(v.confidence))}${karte("Notizen pro Ordner", balkenzeilen(v.folders))}</div>`],
   "vault/graph": ["Obsidian · graphify", "Graph", () => '<iframe src="/graph.html" title="graphify Graph"></iframe>'],
@@ -792,7 +794,7 @@ function einstellungSetzen(schluessel, wert) {
 const GRUPPEN = { sessions: ["Sessions", "#sessions/uebersicht"], konfig: ["Konfiguration", "#konfig/einstellungen"], vault: ["Vault & Graph", "#vault/uebersicht"] };
 const SYSTEMTEXT = /^\s*<(system-reminder|command-|local-command|user-prompt-submit-hook)/;
 function nachrichtHtml(m) {
-  const zeit = m.ts ? new Date(m.ts).toLocaleTimeString("de-DE") : "";
+  const zeit = m.ts ? new Date(m.ts).toLocaleTimeString(DECK_LOCALE) : "";
   const teile = m.blocks.map(b => {
     if (b.type === "text" && SYSTEMTEXT.test(b.text)) return `<details><summary>Systemnachricht</summary><pre>${esc(b.text)}</pre></details>`;
     if (b.type === "text") return `<div class="text">${esc(b.text)}</div>`;
@@ -813,7 +815,7 @@ function alsMarkdown(titel, nachrichten) {
   const teile = nachrichten.map(m => {
     const text = m.blocks.map(b => b.type === "text" && !SYSTEMTEXT.test(b.text) ? b.text
       : b.type === "diff" ? `\`${b.file}\`\n\`\`\`diff\n${b.old.split("\n").map(l => "- " + l).join("\n")}\n${b.new.split("\n").map(l => "+ " + l).join("\n")}\n\`\`\`` : "").filter(Boolean).join("\n\n");
-    return text ? `## ${m.role === "user" ? "Du" : "Claude"} · ${m.ts ? new Date(m.ts).toLocaleString("de-DE") : ""}\n\n${text}` : "";
+    return text ? `## ${m.role === "user" ? "Du" : "Claude"} · ${m.ts ? new Date(m.ts).toLocaleString(DECK_LOCALE) : ""}\n\n${text}` : "";
   }).filter(Boolean);
   return `# ${titel}\n\n${teile.join("\n\n")}\n`;
 }
@@ -879,7 +881,7 @@ function zugriffKarte(rows) {
   const stunde = Date.now() - 36e5, fehler = rows.filter(r => ["fehlschlag", "sperre"].includes(r.event) && new Date(r.t).getTime() > stunde).length;
   return (fehler >= 5 ? `<p class="warnung rot">Achtung: ${fehler} fehlgeschlagene Anmeldungen in der letzten Stunde.</p>` : "") +
     karte("Anmeldungen (letzte 100)", `<table><thead><tr><th>Zeit</th><th>IP</th><th>Ereignis</th></tr></thead><tbody>` + rows.map(r =>
-      `<tr><td class="leise">${new Date(r.t).toLocaleString("de-DE")}</td><td class="mono">${esc(r.ip)}</td><td class="${["fehlschlag", "sperre"].includes(r.event) ? "dienst-aus" : ""}">${esc(r.event)}</td></tr>`).join("") + "</tbody></table>");
+      `<tr><td class="leise">${new Date(r.t).toLocaleString(DECK_LOCALE)}</td><td class="mono">${esc(r.ip)}</td><td class="${["fehlschlag", "sperre"].includes(r.event) ? "dienst-aus" : ""}">${esc(r.event)}</td></tr>`).join("") + "</tbody></table>");
 }
 function dienstKarten(d) {
   const sync = d.services.find(s => s.name === "obsidian-sync");
@@ -913,12 +915,14 @@ const stepperZeile = (id, titel, wert, einheit) => `<div class="zeile"><div>${ti
 function darstellungKarte() {
   const e = einstellungen, dunkel = document.documentElement.dataset.theme !== "hell", akzent = document.documentElement.dataset.akzent;
   const punkte = [["blau", "#0071e3"], ["violett", "#af52de"], ["orange", "#ff9500"], ["gruen", "#34c759"]].map(([n, f]) => `<button type="button" data-akzent="${n}" style="background:${f}" aria-label="Akzentfarbe ${n}" class="${akzent === n ? "aktiv" : ""}"></button>`).join("");
-  return karte("Darstellung", schalterZeile("s-dunkel", "Dunkles Design", "Sonst folgt es dem System", dunkel) + schalterZeile("s-nav", "Seitenleiste", "", !document.body.classList.contains("nav-zu")) +
+  const sprache = `<div class="zeile"><div>Sprache / Language</div><select id="s-sprache" class="auswahl" aria-label="Sprache / Language">${DECK_I18N.liste().map(([c, n]) => `<option value="${c}"${c === DECK_I18N.code ? " selected" : ""}>${n}</option>`).join("")}</select></div>`;
+  return karte("Darstellung", sprache + schalterZeile("s-dunkel", "Dunkles Design", "Sonst folgt es dem System", dunkel) + schalterZeile("s-nav", "Seitenleiste", "", !document.body.classList.contains("nav-zu")) +
     schalterZeile("s-glas", "Glas-Effekte", "Unschärfe und Lichtkanten", e.glas) + schalterZeile("s-bew", "Bewegung", "Animationen und Übergänge", e.bewegung) + schalterZeile("s-ticker", "Live-Leiste", "Letzte Aktion laufender Sessions", e.ticker) +
     stepperZeile("t-takt", "Aktualisierung", e.takt, " s") + stepperZeile("t-schrift", "Schriftgröße", e.schrift, " %") + `<div class="zeile"><div>Akzentfarbe</div><div class="farbpunkte">${punkte}</div></div>`);
 }
 function darstellungVerdrahten() {
   const schalten = (id, aktion) => { const el = document.getElementById(id); el.onclick = () => { const an = el.getAttribute("aria-checked") !== "true"; el.setAttribute("aria-checked", an); aktion(an); }; };
+  document.getElementById("s-sprache").onchange = e => DECK_I18N.setzen(e.target.value);
   schalten("s-dunkel", an => themaSetzen(!an));
   schalten("s-nav", an => { document.body.classList.toggle("nav-zu", !an); speichern("deck-nav", an ? "offen" : "zu"); });
   schalten("s-glas", an => einstellungSetzen("glas", an));

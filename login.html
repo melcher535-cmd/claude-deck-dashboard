@@ -71,6 +71,8 @@
     <button type="submit">Anmelden</button>
   </form>
 </main>
+<script src="/i18n-en.js"></script>
+<script src="/i18n.js"></script>
 <script>
   const f = new URLSearchParams(location.search).get("fehler");
   if (f) { const el = document.getElementById("fehler"); el.hidden = false; el.textContent = f === "gesperrt" ? "Zu viele Fehlversuche. Bitte später erneut versuchen." : "Passwort oder Code falsch."; }

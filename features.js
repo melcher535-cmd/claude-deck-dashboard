@@ -7,7 +7,7 @@ const seitenDaten = {};             // Seite -> zuletzt geladene Daten
 const mitDaten = (route, bauen) => args => { seitenDaten[route] = args.x; return bauen(args); };
 const speicherLesen = (schluessel, standard) => { try { return JSON.parse(localStorage.getItem(schluessel)) ?? standard; } catch (e) { console.warn("Speicher nicht lesbar:", e); return standard; } };
 const speicherSchreiben = (schluessel, wert) => { try { localStorage.setItem(schluessel, JSON.stringify(wert)); } catch (e) { console.warn("Speicher nicht beschreibbar:", e); } };
-const datum = ms => new Date(ms).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+const datum = ms => new Date(ms).toLocaleString(DECK_LOCALE, { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
 const usd = n => "$" + n.toFixed(2);
 const wartend = () => LADEN;
 
@@ -48,7 +48,7 @@ SEITEN["sessions/arbeitszeit"] = ["Claude Code", "Arbeitszeit", ({ x }) => {
 // --- Vergleich zweier Sessions ------------------------------------------------------------------
 let vergleichA = "", vergleichB = "";
 SEITEN["sessions/vergleich"] = ["Claude Code", "Vergleich", ({ s }) => {
-  const optionen = id => `<option value="">– Session wählen –</option>` + s.sessions.slice(0, 120).map(r => `<option value="${esc(r.id)}"${r.id === id ? " selected" : ""}>${esc((r.title || r.id.slice(0, 8)).slice(0, 48))} · ${new Date(r.last).toLocaleDateString("de-DE")}</option>`).join("");
+  const optionen = id => `<option value="">– Session wählen –</option>` + s.sessions.slice(0, 120).map(r => `<option value="${esc(r.id)}"${r.id === id ? " selected" : ""}>${esc((r.title || r.id.slice(0, 8)).slice(0, 48))} · ${new Date(r.last).toLocaleDateString(DECK_LOCALE)}</option>`).join("");
   return `<div class="raster zwei"><label class="feld">Session A<select class="auswahl" id="vg-a">${optionen(vergleichA)}</select></label><label class="feld">Session B<select class="auswahl" id="vg-b">${optionen(vergleichB)}</select></label></div><div id="vg-ergebnis"></div>`;
 }];
 SEITEN_HAKEN["sessions/vergleich"] = async () => {
@@ -266,7 +266,7 @@ document.getElementById("ticker").after(feedPanel);
 document.getElementById("ticker").onclick = () => { feedPanel.hidden = !feedPanel.hidden; feedZeigen(); };
 function feedZeigen() {
   if (feedPanel.hidden) return;
-  feedPanel.innerHTML = `<p class="label">Letzte Aktionen</p>` + (feed.length ? `<table>${feed.slice(0, 20).map(e => `<tr class="klick" onclick="location.hash='chat/${esc(e.id)}'" data-session="${esc(e.id)}"><td class="leise">${new Date(e.t * 1000).toLocaleTimeString("de-DE")}</td><td><b>${esc(e.name)}</b></td><td>${esc(e.action)}</td></tr>`).join("")}</table>` : leer("Noch nichts", "Sobald eine Session etwas tut, steht es hier."));
+  feedPanel.innerHTML = `<p class="label">Letzte Aktionen</p>` + (feed.length ? `<table>${feed.slice(0, 20).map(e => `<tr class="klick" onclick="location.hash='chat/${esc(e.id)}'" data-session="${esc(e.id)}"><td class="leise">${new Date(e.t * 1000).toLocaleTimeString(DECK_LOCALE)}</td><td><b>${esc(e.name)}</b></td><td>${esc(e.action)}</td></tr>`).join("")}</table>` : leer("Noch nichts", "Sobald eine Session etwas tut, steht es hier."));
 }
 function streamStarten() {
   if (!window.EventSource) return;
@@ -354,7 +354,7 @@ function widgetsAnwenden() {
   for (const el of [...seite.children]) {
     if (el.id === "usage") gruppen.usage.push(el);
     else if (el.id === "live") gruppen.live.push(el);
-    else if (el.classList.contains("kleinzeile")) { nachKopf = el.textContent === "Heute" ? "heute" : "gesamt"; gruppen[nachKopf].push(el); }
+    else if (el.classList.contains("kleinzeile")) { nachKopf = el.dataset.abschnitt; gruppen[nachKopf].push(el); }
     else if (nachKopf && el.classList.contains("kpis")) { gruppen[nachKopf].push(el); nachKopf = null; }
     else if (el.classList.contains("zwei")) gruppen.diagramme.push(el);
     else if (el.classList.contains("karte")) gruppen.markiert.push(el);

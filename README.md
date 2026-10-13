@@ -5,7 +5,7 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 - **Small footprint**: `server.py` plus a dependency-free `index.html`. No build step, no database, no npm.
 - **Reads what Claude Code already writes**: session logs in `~/.claude/projects/` and the usage cache in `~/.claude.json`. No API token needed.
 - **Phone friendly**: installable as a home-screen web app, Web Push notifications, layout tuned for modern iPhones.
-- **UI language: German.** Code and this README are in English; labels in the interface are German.
+- **Two languages: German and English.** Switch under **Konto → Darstellung → Sprache / Language**. Adding another language takes one file, see [Languages](#languages).
 
 > **Security first.** The optional remote-control features can start sessions, edit Claude settings and run `tmux` commands on the host, and the original setup runs as root. Read [Security](#security) before you expose this to the internet.
 
@@ -17,6 +17,7 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 - [Configuration](#configuration)
 - [Notifications](#notifications)
 - [Limits and automatic reset](#limits-and-automatic-reset)
+- [Languages](#languages)
 - [Security](#security)
 - [Project layout](#project-layout)
 - [Tests](#tests)
@@ -52,7 +53,7 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 **Account**
 - Login form, rate limiting (5 failures, then a 15-minute lock per IP), "stay signed in" for 30 days
 - Change password in the dashboard (scrypt hash), TOTP two-factor with QR code, access log
-- Light and dark theme, accent colours, Liquid-Glass inspired design, keyboard shortcuts (`?`, `/`, `Ctrl+K`)
+- Language switch (German, English), light and dark theme, accent colours, Liquid-Glass inspired design, keyboard shortcuts (`?`, `/`, `Ctrl+K`)
 
 ## Requirements
 
@@ -306,6 +307,24 @@ Claude Code keeps the numbers shown by `/usage` in `~/.claude.json` (`cachedUsag
 
 Claude Code refreshes the cache only while it is running. So that a finished 5-hour or weekly window does not show a stale value, the server checks `resets_at` on every read: once the time has passed, the limit is displayed as 0 % and one reset notification is sent. As soon as Claude Code writes fresh data, the real values replace this.
 
+## Languages
+
+The source texts are German. The browser translates the interface at runtime with a dictionary, so no page needs a second copy.
+
+- **Switch:** Konto → Darstellung → *Sprache / Language*. The choice is stored in the browser (`localStorage`, key `deck-sprache`) and the page reloads. Without a choice the browser language is used if a pack exists for it, otherwise German.
+- **What is translated:** menus, titles, buttons, hints, tooltips, dialogs and messages of the interface. Dates and times follow the language. The login page is translated as well.
+- **What is not translated:** your own data (session titles, notes, file names, commands, chat text), and messages the server sends outside the page (ntfy and Web Push notifications, the daily report). Those stay German.
+
+### Add a language
+
+1. Copy `i18n-en.js` to `i18n-<code>.js` (for example `i18n-fr.js`) and change `.en` to `.fr`, `name` and `locale`.
+2. Translate the values. Keep the keys (the German source text) exactly as they are. `{0}`, `{1}` stand for numbers and names that are filled in and translated on their own, for example `"Reset in {0}": "Resets in {0}"`. A translation may reorder them.
+3. Load the file before `i18n.js` in `index.html` and `login.html`: `<script src="/i18n-fr.js"></script>`.
+4. Allow the file without sign-in for the login page: add `"/i18n-fr.js": (f"{HERE}/i18n-fr.js", "text/javascript")` to `PUBLIC` in `server.py`.
+5. Run `node test_i18n.js`. It checks that every translation keeps the placeholders of its key.
+
+Texts without an entry stay German, so a pack can grow step by step.
+
 ## Security
 
 Treat this like an admin panel for your server.
@@ -334,13 +353,16 @@ Found a vulnerability? Please open a private security advisory on GitHub instead
 | `control.py`, `control.js` | Remote control with step-up and audit |
 | `storage.py` | Small JSON file helper |
 | `index.html`, `features.js`, `login.html` | The whole front end, no framework |
+| `i18n.js`, `i18n-en.js` | Language switch: runtime translation engine and the English dictionary |
 | `qrcode.js` | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 (MIT), draws the 2FA QR code in the browser |
 | `manifest.webmanifest`, `icon-*.png`, `favicon-*.png` | Home-screen app metadata and icons |
-| `test_*.py` | Tests |
+| `test_*.py`, `test_i18n.js` | Tests |
 
 ## Tests
 
 The tests use plain `assert` statements and need no pytest. A tiny runner:
+
+The language engine has its own test: `node test_i18n.js`.
 
 ```bash
 python3 - <<'EOF'
@@ -365,6 +387,6 @@ EOF
 
 - Costs are token based estimates, not money. The context bar is relative to 1 million tokens because the real window size per model is not known.
 - Limit values are only as fresh as the Claude Code cache.
-- The interface is German only.
+- Only the interface is translated; server messages such as push notifications stay German (see [Languages](#languages)).
 - The layout is checked with Chrome screenshots, not on every device.
 - The graph view needs a graph file written by graphify; without a vault the vault pages stay empty.
