@@ -307,6 +307,8 @@
   .auswahlknopf:active { transform: scale(.96); background: var(--fuellung2); }
   .auswahlknopf[aria-expanded="true"] { background: var(--fuellung2); }
   .auswahlknopf svg { width: 9px; height: 14px; color: var(--leise); }
+  .auswahlknopf.voll { width: 100%; min-height: 38px; justify-content: space-between; text-align: left; }
+  select[data-dd] { display: none; }
   .kontextmenue button.mit-haken { display: flex; align-items: center; gap: 8px; }
   .kontextmenue .haken { flex: none; width: 14px; height: 14px; opacity: 0; }
   .kontextmenue [aria-checked="true"] .haken { opacity: 1; }
@@ -1290,6 +1292,21 @@ function auswahlMenue(knopf, eintraege, aktuell, waehlen) {
   };
   (menue.querySelector('[aria-checked="true"]') || menue.querySelector("button")).focus();
 }
+// Jedes einfache <select class="auswahl"> bekommt den Knopf mit Glasmenue wie die Sprachauswahl; das select bleibt versteckt als Wertquelle
+function auswahlErsetzen(sel) {
+  sel.dataset.dd = "1";
+  const knopf = document.createElement("button");
+  knopf.type = "button"; knopf.className = "auswahlknopf voll"; knopf.setAttribute("aria-haspopup", "menu"); knopf.setAttribute("aria-expanded", "false");
+  const zeigen = () => { const o = sel.selectedOptions[0]; knopf.innerHTML = `<span>${esc(o ? o.textContent : "")}</span>${AUSWAHL_PFEIL}`; };
+  zeigen();
+  knopf.onpointerdown = () => { knopf.dataset.war = document.querySelector(".kontextmenue") ? "1" : ""; };
+  knopf.onclick = () => {
+    if (knopf.dataset.war) { knopf.dataset.war = ""; return; }
+    auswahlMenue(knopf, [...sel.options].map(o => [o.value, o.textContent]), sel.value, wert => { sel.value = wert; zeigen(); sel.dispatchEvent(new Event("change", { bubbles: true })); });
+  };
+  sel.after(knopf);
+}
+new MutationObserver(() => document.querySelectorAll("select.auswahl:not([multiple]):not([data-dd])").forEach(auswahlErsetzen)).observe(document.body, { childList: true, subtree: true });
 function menueSchliessen() { document.querySelectorAll(".kontextmenue").forEach(m => m.remove()); }
 function menueOeffnen(x, y, id) {
   menueSchliessen();
