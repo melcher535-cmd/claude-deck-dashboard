@@ -1,0 +1,1330 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Claude Deck">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=2">
+<link rel="icon" type="image/png" sizes="64x64" href="/favicon-64.png?v=2">
+<link rel="apple-touch-icon" href="/icon-180.png?v=2">
+<title>Claude Deck</title>
+<style>
+  :root {
+    --schrift: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+    --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+    --radius: 20px; --navh: calc(72px + env(safe-area-inset-top, 0px)); --feder: cubic-bezier(.32, .72, 0, 1);
+    --bg: #f2f2f7; --karte: #ffffff; --menue: rgba(255,255,255,.86); --nav: rgba(248,248,250,.72); --leiste: rgba(244,244,247,.7);
+    --text: #000000; --leise: rgba(60,60,67,.6); --rand: rgba(60,60,67,.2); --trenner: rgba(60,60,67,.14);
+    --fuellung: rgba(120,120,128,.12); --fuellung2: rgba(120,120,128,.2); --segment: #ffffff;
+    --blau: #0071e3; --blau-rgb: 0, 113, 227; --orange: #c93400; --ok: #248a3d; --knapp: #c93400; --leer: #d70015; --unter: #c93400;
+    --eingabe: rgba(118,118,128,.12); --code: rgba(120,120,128,.1); --auf-blau: #ffffff; --verlauf: none;
+    --schatten: 0 0 0 .5px rgba(0,0,0,.05), 0 1px 3px rgba(0,0,0,.04);
+    --glas: rgba(255,255,255,.55); --glas-oben: rgba(255,255,255,.9); --glas-rand: rgba(255,255,255,.6); --glanz: rgba(255,255,255,.34);
+    --glas-tief: 0 10px 34px rgba(30,45,90,.12), 0 1px 3px rgba(30,45,90,.06);
+    --hintergrund: radial-gradient(60% 50% at 10% 6%, rgba(0,113,227,.17), transparent 70%), radial-gradient(50% 45% at 92% 10%, rgba(175,82,222,.15), transparent 70%), radial-gradient(60% 50% at 75% 96%, rgba(52,199,89,.13), transparent 70%);
+    --glow: var(--schatten);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="hell"]) {
+    --bg: #000000; --karte: #1c1c1e; --menue: rgba(44,44,46,.86); --nav: rgba(28,28,30,.72); --leiste: rgba(28,28,30,.6);
+    --text: #ffffff; --leise: rgba(235,235,245,.6); --rand: rgba(84,84,88,.65); --trenner: rgba(84,84,88,.45);
+    --fuellung: rgba(120,120,128,.24); --fuellung2: rgba(120,120,128,.36); --segment: rgba(99,99,102,.7);
+    --blau: #0a84ff; --blau-rgb: 10, 132, 255; --orange: #ff9f0a; --ok: #30d158; --knapp: #ff9f0a; --leer: #ff453a; --unter: #ff9f0a;
+    --eingabe: rgba(118,118,128,.24); --code: rgba(120,120,128,.18);
+    --schatten: none;
+    --glas: rgba(58,58,62,.42); --glas-oben: rgba(255,255,255,.26); --glas-rand: rgba(255,255,255,.12); --glanz: rgba(255,255,255,.14);
+    --glas-tief: 0 12px 40px rgba(0,0,0,.45);
+    --hintergrund: radial-gradient(60% 50% at 10% 6%, rgba(10,132,255,.34), transparent 70%), radial-gradient(50% 45% at 92% 10%, rgba(191,90,242,.28), transparent 70%), radial-gradient(60% 50% at 75% 96%, rgba(48,209,88,.2), transparent 70%);
+    }
+  }
+  :root[data-theme="dunkel"] {
+    --bg: #000000; --karte: #1c1c1e; --menue: rgba(44,44,46,.86); --nav: rgba(28,28,30,.72); --leiste: rgba(28,28,30,.6);
+    --text: #ffffff; --leise: rgba(235,235,245,.6); --rand: rgba(84,84,88,.65); --trenner: rgba(84,84,88,.45);
+    --fuellung: rgba(120,120,128,.24); --fuellung2: rgba(120,120,128,.36); --segment: rgba(99,99,102,.7);
+    --blau: #0a84ff; --blau-rgb: 10, 132, 255; --orange: #ff9f0a; --ok: #30d158; --knapp: #ff9f0a; --leer: #ff453a; --unter: #ff9f0a;
+    --eingabe: rgba(118,118,128,.24); --code: rgba(120,120,128,.18);
+    --schatten: none;
+    --glas: rgba(58,58,62,.42); --glas-oben: rgba(255,255,255,.26); --glas-rand: rgba(255,255,255,.12); --glanz: rgba(255,255,255,.14);
+    --glas-tief: 0 12px 40px rgba(0,0,0,.45);
+    --hintergrund: radial-gradient(60% 50% at 10% 6%, rgba(10,132,255,.34), transparent 70%), radial-gradient(50% 45% at 92% 10%, rgba(191,90,242,.28), transparent 70%), radial-gradient(60% 50% at 75% 96%, rgba(48,209,88,.2), transparent 70%);
+  }
+  :root[data-akzent="violett"] { --blau: #af52de; --blau-rgb: 175, 82, 222; }
+  :root[data-akzent="orange"] { --blau: #ff9500; --blau-rgb: 255, 149, 0; }
+  :root[data-akzent="gruen"] { --blau: #34c759; --blau-rgb: 52, 199, 89; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="hell"])[data-akzent="violett"] { --blau: #bf5af2; --blau-rgb: 191, 90, 242; }
+    :root:not([data-theme="hell"])[data-akzent="orange"] { --blau: #ff9f0a; --blau-rgb: 255, 159, 10; }
+    :root:not([data-theme="hell"])[data-akzent="gruen"] { --blau: #30d158; --blau-rgb: 48, 209, 88; }
+  }
+  :root[data-theme="dunkel"][data-akzent="violett"] { --blau: #bf5af2; --blau-rgb: 191, 90, 242; }
+  :root[data-theme="dunkel"][data-akzent="orange"] { --blau: #ff9f0a; --blau-rgb: 255, 159, 10; }
+  :root[data-theme="dunkel"][data-akzent="gruen"] { --blau: #30d158; --blau-rgb: 48, 209, 88; }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+  :root[data-theme="hell"] { color-scheme: light; }
+  :root[data-theme="dunkel"] { color-scheme: dark; }
+  body { margin: 0; min-height: 100vh; background: var(--hintergrund), var(--bg); background-attachment: fixed; color: var(--text); font: 0.9375rem/1.47 var(--schrift); letter-spacing: -.01em; -webkit-font-smoothing: antialiased; }
+  [hidden] { display: none !important; }
+  a { color: var(--blau); }
+  ::selection { background: rgba(var(--blau-rgb), .28); }
+
+  /* Kopfleiste: durchscheinendes Material, Trennlinie erst beim Scrollen */
+  .topnav { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 12px; padding: 8px 16px; background: var(--nav);
+    -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px); border-bottom: .5px solid transparent; transition: border-color .2s; }
+  body.gescrollt .topnav { border-bottom-color: var(--rand); }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--text); font-weight: 600; letter-spacing: -.02em; text-decoration: none; white-space: nowrap; }
+  .marke-text span { color: var(--leise); font-weight: 400; }
+  .marke-bild { width: 30px; height: 30px; flex: none; border-radius: 8px; box-shadow: 0 0 0 .5px rgba(255,255,255,.25), 0 2px 8px rgba(0,0,0,.35); transition: transform .2s var(--feder); }
+  .brand:active .marke-bild { transform: scale(.92); }
+  .marke-bild.arbeitet { animation: logo-puls 2.2s ease-in-out infinite; }
+  @keyframes logo-puls { 0%, 100% { box-shadow: 0 0 0 .5px rgba(0,229,255,.5), 0 0 0 0 rgba(0,229,255,0); } 50% { box-shadow: 0 0 0 .5px rgba(0,229,255,.9), 0 0 14px 2px rgba(0,229,255,.55); } }
+  .werkzeugtitel { position: absolute; left: 50%; max-width: 28vw; transform: translateX(-50%); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; opacity: 0; transition: opacity .2s; pointer-events: none; }
+  body.titel-weg .werkzeugtitel { opacity: 1; }
+  .topnav .rechts { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+  .topnav form { margin: 0; }
+  .suche { display: flex; align-items: center; gap: 6px; padding: 0 10px; border-radius: 10px; background: var(--eingabe); color: var(--leise); transition: box-shadow .15s; }
+  .suche:focus-within { box-shadow: 0 0 0 3.5px rgba(var(--blau-rgb), .4); }
+  .suche svg { width: 15px; height: 15px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+  .suche input { width: 230px; max-width: 28vw; padding: 7px 0; border: 0; outline: none; background: transparent; color: var(--text); font: inherit; }
+  .suche input::placeholder { color: var(--leise); }
+  .akzentwahl { display: flex; gap: 8px; }
+  .akzentwahl button { width: 14px; height: 14px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; transition: transform .15s var(--feder); }
+  .akzentwahl button:active { transform: scale(.85); }
+  .akzentwahl button.aktiv { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--leise); }
+
+  /* Schaltflaechen */
+  .tab { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border: 0; border-radius: 999px; background: var(--fuellung); color: var(--text);
+    font: 500 0.875rem var(--schrift); letter-spacing: -.01em; text-decoration: none; cursor: pointer; transition: background .15s, transform .12s var(--feder); }
+  .tab:hover { background: var(--fuellung2); }
+  .tab:active { transform: scale(.96); }
+  .tab.aktiv { background: rgba(var(--blau-rgb), .16); color: var(--blau); }
+  .formular .tab.aktiv { background: var(--blau); color: var(--auf-blau); padding: 9px 16px; justify-content: center; }
+  .segment { display: inline-flex; padding: 2px; border-radius: 9px; background: var(--fuellung); }
+  .seg { padding: 4px 14px; border: 0; border-radius: 7px; background: none; color: var(--text); font: 500 0.8125rem var(--schrift); letter-spacing: -.005em; cursor: pointer; transition: background .25s var(--feder), box-shadow .25s; }
+  .seg.aktiv { background: var(--segment); box-shadow: 0 1px 3px rgba(0,0,0,.12), 0 0 0 .5px rgba(0,0,0,.04); }
+
+  /* Seitenleiste */
+  .app { display: grid; grid-template-columns: 260px minmax(0, 1fr); align-items: start; transition: grid-template-columns .35s var(--feder); }
+  body.nav-zu .app { grid-template-columns: 0 minmax(0, 1fr); }
+  .seitenleiste { position: sticky; top: var(--navh); height: calc(100vh - var(--navh)); overflow: hidden auto; padding: 8px 12px 24px; background: var(--leiste);
+    -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px); border-right: .5px solid var(--trenner); transition: opacity .25s, transform .35s var(--feder), visibility .35s; }
+  body.nav-zu .seitenleiste { opacity: 0; transform: translateX(-16px); visibility: hidden; }
+  .seitenleiste details { margin: 0 0 2px; }
+  .seitenleiste summary { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 8px; list-style: none; font-weight: 600; cursor: pointer; transition: background .15s, transform .12s var(--feder); }
+  .seitenleiste summary::-webkit-details-marker { display: none; }
+  .seitenleiste summary::after { content: ""; margin-left: auto; width: 6px; height: 6px; border-right: 1.8px solid var(--leise); border-bottom: 1.8px solid var(--leise); transform: rotate(-45deg); transition: transform .25s var(--feder); }
+  .seitenleiste details[open] > summary::after { transform: rotate(45deg); }
+  .seitenleiste summary:hover { background: var(--fuellung); }
+  .seitenleiste summary:active { transform: scale(.985); }
+  .sym { display: grid; place-items: center; width: 22px; height: 22px; flex: none; color: var(--blau); }
+  .sym svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
+  .menuelink { display: flex; align-items: center; gap: 10px; margin: 1px 0; padding: 6px 10px; border-radius: 8px; color: var(--text); font-size: 0.875rem; text-decoration: none; transition: background .15s, transform .12s var(--feder); }
+  .seitenleiste details .menuelink { margin-left: 32px; }
+  .menuelink:hover { background: var(--fuellung); }
+  .menuelink:active { transform: scale(.985); }
+  .menuelink.aktiv { background: var(--blau); color: var(--auf-blau); font-weight: 500; }
+  .menuelink.aktiv .sym { color: inherit; }
+  .seitenleiste > .menuelink { font-weight: 600; font-size: 0.9375rem; padding: 7px 10px; }
+
+  /* Live-Leiste */
+  .ticker { display: flex; gap: 8px; padding: 8px 16px; overflow-x: auto; white-space: nowrap; }
+  .ticker > span { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px; border-radius: 999px; background: var(--fuellung); font-size: 0.8125rem; }
+  .ticker b { font-weight: 600; }
+
+  /* Inhalt */
+  main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 14px 32px 56px; }
+  .kleinzeile { margin: 0 0 2px; color: var(--leise); font-size: 0.8125rem; letter-spacing: 0; }
+  .kleinzeile a { color: var(--blau); text-decoration: none; }
+  h1 { margin: 0 0 20px; font: 700 2.125rem/1.12 var(--schrift); letter-spacing: -.022em; }
+  .karte { padding: 16px 18px; border-radius: var(--radius); background: var(--karte); box-shadow: var(--schatten); }
+  .label { margin: 0 0 8px; color: var(--leise); font-size: 0.8125rem; letter-spacing: -.005em; text-transform: uppercase; }
+  .zahl { margin: 2px 0 4px; font: 700 2.125rem/1.08 var(--schrift); letter-spacing: -.022em; font-variant-numeric: tabular-nums; }
+  .kontext { margin: 0; color: var(--leise); font-size: 0.8125rem; letter-spacing: -.005em; }
+  .raster { display: grid; gap: 16px; margin-bottom: 16px; }
+  .kpis { grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+  .zwei { grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); }
+  .tabelle { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { padding: 8px 12px; border-bottom: .5px solid var(--trenner); color: var(--leise); font-size: 0.75rem; font-weight: 400; text-align: left; }
+  td { padding: 10px 12px; border-bottom: .5px solid var(--trenner); }
+  tbody tr:last-child td { border-bottom: 0; }
+  tbody tr:hover { background: var(--fuellung); }
+  tr.klick { cursor: pointer; }
+  tr.klick:active { background: var(--fuellung2); }
+  .r { text-align: right; font-variant-numeric: tabular-nums; }
+  .leise { color: var(--leise); }
+  .mono { font-family: var(--mono); font-size: .92em; }
+  .balken { min-width: 2px; height: 6px; border-radius: 3px; background: var(--blau); }
+  ul { margin: 0 0 10px; padding-left: 18px; } li { margin: 2px 0; }
+  svg { display: block; width: 100%; height: auto; }
+  svg text { fill: var(--leise); font: 11px var(--schrift); }
+  .donut { display: flex; flex-wrap: wrap; align-items: center; gap: 20px; }
+  .donut svg { width: 170px; flex: none; }
+  .legende { flex: 1; min-width: 160px; margin: 0; padding: 0; list-style: none; }
+  .legende li { display: flex; align-items: center; gap: 8px; }
+  .punkt { width: 10px; height: 10px; flex: none; border-radius: 50%; }
+  iframe { width: 100%; height: 78vh; border: 0; border-radius: var(--radius); background: var(--karte); box-shadow: var(--schatten); }
+  .warnung { margin: 0 0 14px; padding: 10px 14px; border-radius: 12px; background: rgba(255,149,0,.14); color: var(--knapp); }
+  .warnung.rot { background: rgba(255,59,48,.14); color: var(--leer); }
+  .kontextbalken { height: 4px; max-width: 120px; margin-top: 4px; border-radius: 2px; background: var(--blau); }
+  .dienst-ok { color: var(--ok); } .dienst-aus { color: var(--leer); }
+  pre.roh { margin: 0; max-height: 70vh; overflow: auto; font: 0.75rem/1.5 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .chips span { display: inline-block; margin: 0 6px 6px 0; padding: 3px 11px; border-radius: 999px; background: var(--fuellung); font-size: 0.8125rem; }
+  details details { margin-left: 18px; }
+  .baum summary { padding: 3px 0; cursor: pointer; }
+  .leer { padding: 22px 10px; color: var(--leise); text-align: center; }
+  .leer b { display: block; margin-bottom: 4px; color: var(--text); font-weight: 600; }
+  .spark { margin-top: 6px; } .spark svg { height: 26px; }
+  .ringe { display: flex; flex-wrap: wrap; gap: 28px; }
+  .ring { flex: 1; min-width: 150px; text-align: center; }
+  .ring svg { width: 132px; margin: 0 auto 10px; }
+  .ring text.prozent { fill: var(--text); font: 700 9px var(--schrift); letter-spacing: -.02em; }
+
+  /* Formulare */
+  .qr { width: 210px; margin: 12px 0; overflow: hidden; border-radius: 16px; box-shadow: 0 0 0 .5px var(--rand); }
+  .formular { display: grid; gap: 12px; max-width: 420px; }
+  .feld { display: grid; gap: 4px; color: var(--leise); font-size: 0.8125rem; }
+  .formular input, .chatwerkzeug input { min-width: 0; padding: 9px 12px; border: 0; border-radius: 10px; outline: none; background: var(--eingabe); color: var(--text); font: 1rem var(--schrift); transition: box-shadow .15s; }
+  .formular input:focus, .chatwerkzeug input:focus { box-shadow: 0 0 0 3.5px rgba(var(--blau-rgb), .4); }
+  .chatwerkzeug { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 6px; }
+  .chatwerkzeug input { flex: 1; min-width: 180px; max-width: 360px; font-size: 0.875rem; }
+
+  /* Chat wie iMessage */
+  .chatkopf { position: sticky; top: var(--navh); z-index: 20; margin: 0 -32px 16px; padding: 10px 32px; background: var(--nav);
+    -webkit-backdrop-filter: saturate(180%) blur(24px); backdrop-filter: saturate(180%) blur(24px); border-bottom: .5px solid var(--trenner); }
+  #chat[data-filter="user"] .nachricht:not(.user), #chat[data-filter="diff"] .nachricht:not(.hat-diff), #chat[data-filter="fehler"] .nachricht:not(.hat-fehler) { display: none; }
+  .nachricht { display: flex; max-width: 760px; margin: 0 0 6px; }
+  .nachricht.user { flex-direction: row-reverse; margin-left: auto; }
+  .avatar { display: none; }
+  .blase { min-width: 0; padding: 8px 14px; border-radius: 18px; background: var(--fuellung); }
+  .nachricht.assistant .blase { border-bottom-left-radius: 6px; }
+  .nachricht.user .blase { border-bottom-right-radius: 6px; background: var(--blau); color: var(--auf-blau); }
+  .nachricht.user .wer, .nachricht.user summary { color: rgba(255,255,255,.92); }
+  .nachricht .wer { margin: 0 0 2px; color: var(--leise); font-size: 0.6875rem; }
+  .nachricht .text { white-space: pre-wrap; overflow-wrap: anywhere; }
+  .nachricht details { margin: 6px 0; color: var(--leise); }
+  .nachricht summary { cursor: pointer; }
+  .nachricht pre { max-height: 320px; margin: 6px 0 0; padding: 8px 10px; overflow: auto; border-radius: 10px; background: var(--code); color: var(--text); font: 0.75rem var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .nachricht.user pre { background: rgba(0,0,0,.2); color: #fff; }
+  .nachricht pre.fehler { box-shadow: inset 0 0 0 1px var(--leer); }
+  .nachricht.werkzeug { margin: 0 0 4px 12px; font-size: 0.8125rem; }
+  .nachricht.werkzeug details { margin: 0; }
+  .diffbox { max-height: 320px; margin-top: 6px; overflow: auto; border-radius: 10px; background: var(--code); }
+  .dz { padding: 0 8px; font: 0.75rem var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); }
+  .dz.del { background: rgba(255,59,48,.16); } .dz.neu { background: rgba(52,199,89,.18); }
+
+  /* Befehlspalette wie Spotlight */
+  .palette-hintergrund { position: fixed; inset: 0; z-index: 100; display: grid; place-items: start center; padding-top: 16vh; background: rgba(0,0,0,.3); animation: einblenden .2s; }
+  .palette { width: min(640px, 92vw); overflow: hidden; border-radius: 22px; background: var(--menue); box-shadow: 0 24px 80px rgba(0,0,0,.35), 0 0 0 .5px var(--rand);
+    -webkit-backdrop-filter: saturate(180%) blur(40px); backdrop-filter: saturate(180%) blur(40px); animation: aufploppen .28s var(--feder); }
+  .palette input { width: 100%; padding: 18px 22px; border: 0; outline: none; background: transparent; color: var(--text); font: 1.375rem var(--schrift); letter-spacing: -.02em; }
+  .palette ul { max-height: 50vh; margin: 0; padding: 8px; overflow-y: auto; border-top: .5px solid var(--trenner); list-style: none; }
+  .palette li { display: flex; justify-content: space-between; gap: 12px; margin: 0; padding: 9px 14px; border-radius: 10px; cursor: pointer; }
+  .palette li small { color: var(--leise); }
+  .palette li.gewaehlt { background: var(--blau); color: var(--auf-blau); }
+  .palette li.gewaehlt small { color: rgba(255,255,255,.92); }
+
+  /* Bewegung */
+  @keyframes einblenden { from { opacity: 0; } }
+  @keyframes aufploppen { from { opacity: 0; transform: scale(.96) translateY(-8px); } }
+  @keyframes erscheinen { from { opacity: 0; transform: translateY(8px); } }
+  @keyframes puls { 0%, 100% { box-shadow: 0 0 0 0 rgba(48,209,88,.55); } 50% { box-shadow: 0 0 0 6px rgba(48,209,88,0); } }
+  @keyframes aufblitzen { from { box-shadow: 0 0 0 3px rgba(var(--blau-rgb), .55); } to { box-shadow: 0 0 0 3px transparent; } }
+  .erscheinen { animation: erscheinen .4s var(--feder); }
+  .punkt.puls { animation: puls 1.6s ease-in-out infinite; }
+  .aufblitzen .karte { animation: aufblitzen 1s ease-out; }
+
+  /* Liquid Glass: schwebende Flaechen, Lichtkante oben, Glanz folgt dem Zeiger */
+  .topnav, .seitenleiste, .chatkopf, .karte, .palette, .suche, .tab, .segment, .ticker > span {
+    background: linear-gradient(145deg, rgba(255,255,255,.2), rgba(255,255,255,0) 55%), var(--glas);
+    -webkit-backdrop-filter: blur(22px) saturate(1.8); backdrop-filter: blur(22px) saturate(1.8);
+    box-shadow: inset 0 1px 0 var(--glas-oben), inset 0 0 0 .5px var(--glas-rand), var(--glas-tief);
+  }
+  .karte, .tab, .segment, .suche, .ticker > span, .palette { position: relative; }
+  .karte::before, .tab::before, .segment::before, .suche::before, .ticker > span::before, .palette::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; opacity: 0; transition: opacity .35s;
+    background: radial-gradient(190px circle at var(--mx, 30%) var(--my, 0%), var(--glanz), transparent 65%);
+  }
+  .karte:hover::before, .tab:hover::before, .segment:hover::before, .suche:hover::before, .ticker > span:hover::before, .palette:hover::before { opacity: 1; }
+  .topnav { top: 10px; margin: 10px 14px 0; padding: 8px 14px; border-radius: 22px; }
+  body.gescrollt .topnav { border-bottom-color: transparent; }
+  .seitenleiste { top: var(--navh); height: calc(100vh - var(--navh) - 12px); margin: 0 0 12px 14px; border: 0; border-radius: 26px; }
+  .chatkopf { margin: 0 0 16px; padding: 10px 14px; border: 0; border-radius: 22px; }
+  .suche { border-radius: 999px; }
+  .tab:hover { background: linear-gradient(145deg, rgba(255,255,255,.3), rgba(255,255,255,0) 55%), var(--glas); }
+  .tab.aktiv { background: linear-gradient(145deg, rgba(255,255,255,.28), rgba(255,255,255,0) 60%), rgba(var(--blau-rgb), .26); color: var(--blau); }
+  .formular .tab.aktiv { background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 60%), var(--blau); color: var(--auf-blau);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.45), 0 6px 18px rgba(var(--blau-rgb), .35); }
+  .seg.aktiv { background: linear-gradient(180deg, rgba(255,255,255,.5), rgba(255,255,255,.1)), var(--segment); box-shadow: inset 0 1px 0 rgba(255,255,255,.85), 0 3px 12px rgba(0,0,0,.14); }
+  .menuelink.aktiv { background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 60%), var(--blau); box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 4px 14px rgba(var(--blau-rgb), .35); }
+  .palette li.gewaehlt { background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,0) 60%), var(--blau); }
+  .palette { -webkit-backdrop-filter: blur(44px) saturate(1.9); backdrop-filter: blur(44px) saturate(1.9); }
+  .nachricht.user .blase { background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,0) 55%), var(--blau); box-shadow: inset 0 1px 0 rgba(255,255,255,.35); }
+  .nachricht.assistant .blase, .nachricht.werkzeug { -webkit-backdrop-filter: blur(16px) saturate(1.6); backdrop-filter: blur(16px) saturate(1.6); }
+  .nachricht.assistant .blase { background: linear-gradient(145deg, rgba(255,255,255,.18), rgba(255,255,255,0) 55%), var(--glas); box-shadow: inset 0 1px 0 var(--glas-oben), inset 0 0 0 .5px var(--glas-rand); }
+  @keyframes aufploppen { from { opacity: 0; transform: scale(.94) translateY(-10px); filter: blur(10px); } }
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    :root { --glas: var(--karte); }
+  }
+
+  /* Fokus, sicherer Bereich, Ueberspringen-Knopf */
+  :focus-visible { outline: 3px solid rgba(var(--blau-rgb), .6); outline-offset: 2px; border-radius: 6px; }
+  main:focus { outline: none; }
+  .ueberspringen { position: absolute; left: 12px; top: -80px; z-index: 200; padding: 8px 14px; border: 0; border-radius: 999px; background: var(--blau); color: var(--auf-blau); font: inherit; }
+  .ueberspringen:focus { top: calc(8px + env(safe-area-inset-top, 0px)); }
+  .topnav { top: calc(10px + env(safe-area-inset-top, 0px)); margin: calc(10px + env(safe-area-inset-top, 0px)) calc(14px + env(safe-area-inset-right, 0px)) 0 calc(14px + env(safe-area-inset-left, 0px)); }
+  .seitenleiste { margin-left: calc(14px + env(safe-area-inset-left, 0px)); }
+  main { padding-right: max(32px, env(safe-area-inset-right, 0px)); padding-bottom: calc(56px + env(safe-area-inset-bottom, 0px)); }
+
+  /* Wischen: Abdunkeln und Randzone fuer die Seitenleiste auf dem Handy */
+  .scrim, .kante { display: none; }
+  .scrim { position: fixed; inset: 0; z-index: 34; background: rgba(0,0,0,.32); opacity: 0; pointer-events: none; }
+  .kante { position: fixed; z-index: 36; top: 0; bottom: 0; left: 0; width: 18px; touch-action: pan-y; }
+  .palette .griff { display: none; width: 38px; height: 5px; margin: 8px auto 0; border-radius: 3px; background: var(--fuellung2); touch-action: none; }
+  @media (pointer: coarse) { .palette .griff { display: block; } }
+
+  /* Listen, Schalter und Stepper im Stil von iOS */
+  .zeile { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: .5px solid var(--trenner); }
+  .zeile:last-child { border-bottom: 0; }
+  .zeile small { display: block; color: var(--leise); font-size: .8125rem; }
+  .schalter { position: relative; flex: none; width: 51px; height: 31px; padding: 0; border: 0; border-radius: 999px; background: var(--fuellung2); cursor: pointer; transition: background .25s var(--feder); }
+  .schalter::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 3px 8px rgba(0,0,0,.15), 0 1px 1px rgba(0,0,0,.16); transition: transform .3s var(--feder), width .2s var(--feder); }
+  .schalter[aria-checked="true"] { background: var(--ok); }
+  .schalter[aria-checked="true"]::after { transform: translateX(20px); }
+  .schalter:active::after { width: 33px; }
+  .schalter[aria-checked="true"]:active::after { transform: translateX(14px); }
+  .stepper { display: inline-flex; align-items: center; border-radius: 9px; background: var(--fuellung); }
+  .stepper button { width: 42px; height: 30px; padding: 0; border: 0; background: none; color: var(--text); font-size: 1.125rem; cursor: pointer; border-radius: 9px; }
+  .stepper button:active { background: var(--fuellung2); }
+  .stepper output { min-width: 62px; padding: 0 6px; border-inline: .5px solid var(--trenner); font-variant-numeric: tabular-nums; line-height: 30px; text-align: center; }
+  .farbpunkte { display: flex; gap: 12px; }
+  .farbpunkte button { width: 26px; height: 26px; padding: 0; border: 0; border-radius: 50%; cursor: pointer; transition: transform .15s var(--feder); }
+  .farbpunkte button:active { transform: scale(.88); }
+  .farbpunkte button.aktiv { box-shadow: 0 0 0 2px var(--karte), 0 0 0 4px var(--leise); }
+
+  /* Kontextmenue, Meldungen, Tooltips */
+  .kontextmenue, .toast, .tipp { background: linear-gradient(145deg, rgba(255,255,255,.2), rgba(255,255,255,0) 55%), var(--glas); -webkit-backdrop-filter: blur(30px) saturate(1.9); backdrop-filter: blur(30px) saturate(1.9);
+    box-shadow: inset 0 1px 0 var(--glas-oben), inset 0 0 0 .5px var(--glas-rand), 0 14px 40px rgba(0,0,0,.25); }
+  .kontextmenue { position: fixed; z-index: 120; min-width: 230px; padding: 6px; border-radius: 16px; animation: aufploppen .22s var(--feder); }
+  .kontextmenue button { display: block; width: 100%; padding: 8px 12px; border: 0; border-radius: 9px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+  .kontextmenue button:hover, .kontextmenue button:focus-visible { background: var(--blau); color: var(--auf-blau); outline: none; }
+  #toasts { position: fixed; z-index: 150; left: 50%; bottom: calc(20px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 8px; justify-items: center; transform: translateX(-50%); pointer-events: none; }
+  .toast { padding: 10px 18px; border-radius: 999px; font-weight: 500; animation: toast-ein .4s var(--feder); }
+  .toast.weg { opacity: 0; transform: translateY(10px) scale(.96); transition: opacity .3s, transform .3s var(--feder); }
+  @keyframes toast-ein { from { opacity: 0; transform: translateY(16px) scale(.94); } }
+  .tipp { position: fixed; z-index: 130; padding: 6px 11px; border-radius: 10px; font-size: .8125rem; pointer-events: none; white-space: nowrap; }
+  rect[data-tip], circle[data-tip] { cursor: crosshair; }
+  rect[data-tip]:hover, circle[data-tip]:hover { filter: brightness(1.2); }
+  svg:has([data-tip]) { touch-action: pan-y; }
+
+  /* Skelett statt "Lade ..." */
+  .skelett { display: grid; gap: 16px; }
+  .skelett .karte { display: grid; align-content: start; gap: 8px; }
+  .skelett span { display: block; height: 14px; border-radius: 8px; background: linear-gradient(90deg, var(--fuellung) 25%, var(--fuellung2) 37%, var(--fuellung) 63%); background-size: 400% 100%; animation: schimmer 1.4s ease infinite; }
+  @keyframes schimmer { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+
+  /* Einstellungen aus Konto: Glas aus, Bewegung aus */
+  body.ruhe *, body.ruhe *::before, body.ruhe *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; animation-iteration-count: 1 !important; }
+  body.kein-glas { background: var(--bg); }
+  body.kein-glas .topnav, body.kein-glas .seitenleiste, body.kein-glas .chatkopf, body.kein-glas .karte, body.kein-glas .palette, body.kein-glas .suche, body.kein-glas .segment,
+  body.kein-glas .ticker > span, body.kein-glas .nachricht.assistant .blase, body.kein-glas .nachricht.werkzeug, body.kein-glas .kontextmenue, body.kein-glas .toast, body.kein-glas .tipp { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--karte); }
+  body.kein-glas .tab { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--fuellung); }
+  body.kein-glas .tab.aktiv { background: rgba(var(--blau-rgb), .16); }
+  body.kein-glas .formular .tab.aktiv, body.kein-glas .menuelink.aktiv, body.kein-glas .palette li.gewaehlt, body.kein-glas .nachricht.user .blase { background: var(--blau); }
+
+  /* Barrierefreiheit: weniger Bewegung, weniger Transparenz, mehr Kontrast */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    body { background: var(--bg); }
+    .topnav, .seitenleiste, .chatkopf, .karte, .palette, .suche, .tab, .segment, .ticker > span, .nachricht.assistant .blase, .nachricht.werkzeug { -webkit-backdrop-filter: none; backdrop-filter: none; background: var(--karte); }
+    .tab, .segment { background: var(--fuellung); }
+    .tab.aktiv { background: rgba(var(--blau-rgb), .16); } .formular .tab.aktiv, .menuelink.aktiv, .palette li.gewaehlt, .nachricht.user .blase { background: var(--blau); }
+  }
+  @media (prefers-contrast: more) {
+    :root { --rand: rgba(60,60,67,.55); --trenner: rgba(60,60,67,.4); --leise: rgba(60,60,67,.85); }
+    @media (prefers-color-scheme: dark) { :root:not([data-theme="hell"]) { --rand: rgba(235,235,245,.5); --trenner: rgba(235,235,245,.35); --leise: rgba(235,235,245,.85); } }
+  }
+
+  body::before { content: ""; position: fixed; z-index: 45; top: 0; left: 0; right: 0; height: env(safe-area-inset-top, 0px); background: var(--nav); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); pointer-events: none; }
+  /* Schmale Bildschirme */
+  .statuszelle { display: inline-flex; align-items: center; gap: 8px; }
+  .kontextzelle { display: inline-flex; flex-direction: column; align-items: flex-end; }
+  .kontextbalken { display: block; }
+  .ticker > span { max-width: 78vw; overflow: hidden; text-overflow: ellipsis; }
+  .abmelden { display: none; margin: 0; }
+  .abmelden button { width: 100%; border: 0; background: none; font: inherit; font-weight: 600; font-size: .9375rem; text-align: left; cursor: pointer; }
+  @media (max-width: 1100px) { .werkzeugtitel { display: none; } }
+  @media (max-width: 900px) {
+    .app, body.nav-zu .app { grid-template-columns: minmax(0, 1fr); }
+    .seitenleiste, body.nav-zu .seitenleiste { position: fixed; z-index: 35; top: var(--navh); bottom: 0; left: 0; width: 280px; height: auto; margin: 0; border-radius: 0 26px 26px 0; opacity: 1; visibility: visible; background: var(--menue); transform: translateX(-100%); }
+    body.nav-offen .seitenleiste { transform: none; box-shadow: 0 0 40px rgba(0,0,0,.25); touch-action: pan-y; }
+    .scrim, .kante { display: block; }
+    body.nav-offen .scrim { opacity: 1; pointer-events: auto; transition: opacity .3s; }
+    body.nav-offen .kante { display: none; }
+    body.zieht .seitenleiste, body.zieht .scrim { transition: none !important; }
+    main { padding: 12px max(16px, env(safe-area-inset-right, 0px)) calc(48px + env(safe-area-inset-bottom, 0px)) max(16px, env(safe-area-inset-left, 0px)); }
+    .topnav { padding: 8px 12px; } .akzentwahl { display: none; } .abmelden { display: block; }
+    .topnav .rechts { flex: 1; min-width: 0; margin-left: 0; } .topnav .rechts form:first-child { flex: 1; min-width: 0; }
+    .suche { width: 100%; } .suche input { width: 100%; max-width: none; min-width: 0; }
+    .ticker { padding: 8px 12px; } .chatkopf { margin: 0 0 16px; }
+  }
+  @media (max-width: 700px) {
+    .nur-gross { display: none !important; }
+    .donut { justify-content: center; } .donut svg { width: 130px; } .legende { flex-basis: 100%; }
+    .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .kpis .karte { padding: 14px; }
+    .zahl { font-size: clamp(1.4rem, 6.6vw, 2.125rem); overflow-wrap: anywhere; }
+    tr.klick { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 14px; padding: 11px 0; }
+    tr.klick td { display: block; flex: 0 1 auto; width: auto; padding: 0; text-align: left; }
+    tr.klick td::before { content: none; }
+    tr.klick td:first-child { flex: 1 0 100%; font-weight: 600; }
+    tr.klick td:last-child { margin-left: auto; }
+    .chatkopf { padding: 8px 12px; border-radius: 20px; }
+    .chatkopf .chatwerkzeug { flex-wrap: nowrap; overflow-x: auto; margin: 0 0 6px; padding-bottom: 2px; scrollbar-width: none; }
+    .chatkopf .chatwerkzeug > * { flex: none; }
+    .chatkopf .chatwerkzeug input { width: 150px; min-width: 0; }
+    .chatkopf .segment { display: flex; width: 100%; } .chatkopf .seg { flex: 1; padding: 4px 6px; }
+    #chattitel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #chatdauer { display: none; }
+    .nachricht summary { font-size: .875rem; }
+    .nachricht { max-width: 100%; }
+    #theme, .rechts > form:last-child, .marke-text > span { display: none; }
+    h1 { font-size: 1.75rem; }
+    table, tbody, tr, td { display: block; width: 100%; }
+    thead { display: none; }
+    tr { padding: 8px 0; border-bottom: .5px solid var(--trenner); }
+    td { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border: 0; text-align: right; }
+    td::before { content: attr(data-label); flex: none; color: var(--leise); font-size: 0.75rem; text-align: left; }
+    td[data-label=""]::before { content: none; }
+    .zwei { grid-template-columns: minmax(0, 1fr); }
+  }
+
+  /* Zusatzfunktionen: Auswahl, Notizen, Graph, Feed, Widgets */
+  .auswahl { width: 100%; padding: 9px 12px; border: 0; border-radius: 10px; outline: none; background: var(--eingabe); color: var(--text); font: inherit; }
+  .suche.suche-gross { margin-bottom: 16px; padding: 0 14px; }
+  .suche-gross input { width: 100%; max-width: none; padding: 12px 0; font-size: 1rem; }
+  .graphrahmen { height: 62vh; min-height: 360px; overflow: hidden; border-radius: var(--radius); background: var(--karte); box-shadow: var(--schatten); touch-action: none; margin-bottom: 16px; }
+  #gr-leinwand { display: block; touch-action: none; cursor: grab; }
+  .notiz { line-height: 1.6; } .notiz p { margin: 8px 0; } .notiz-h { margin: 16px 0 6px; font-weight: 700; }
+  .notiz a.wiki { color: var(--blau); text-decoration: none; }
+  .gantt-balken { cursor: pointer; }
+  .chip { display: inline-block; margin: 0 6px 6px 0; padding: 4px 12px; border-radius: 999px; background: var(--fuellung); color: var(--text); font-size: .8125rem; text-decoration: none; }
+  .chips .nachbar { cursor: pointer; }
+  .ticker { cursor: pointer; }
+  #feedpanel { margin: 0 16px 10px; padding: 12px 16px; border-radius: 16px; background: var(--karte); box-shadow: var(--schatten); max-height: 46vh; overflow: auto; }
+  .widget-steuer { display: none; align-items: center; justify-content: space-between; margin: 0 0 8px; padding: 6px 12px; border-radius: 12px; background: var(--fuellung); }
+  #seite.widgets-bearbeiten .widget-steuer { display: flex; }
+  .widget-steuer button { margin-left: 6px; padding: 4px 10px; border: 0; border-radius: 8px; background: var(--fuellung2); color: var(--text); cursor: pointer; }
+  .widget-aus { display: none; }
+  #seite.widgets-bearbeiten .widget-aus { display: block; opacity: .45; }
+  #widgets-bearbeiten { margin: 0 0 12px; }
+  .hilfe { max-width: 560px; }
+  .terminal { margin: 0; min-height: 320px; max-height: 62vh; overflow: auto; padding: 12px; border-radius: 12px; background: #0c0e12; color: #d8e6ea; font: 12px/1.45 var(--mono); white-space: pre; }
+  .bridge-zeile { cursor: pointer; border-radius: 10px; padding-inline: 10px; }
+  .bridge-zeile.aktiv { background: rgba(var(--blau-rgb), .16); }
+  .post-zeile { align-items: flex-start; }
+  .bridge-eingabe { display: flex; gap: 8px; margin: 12px 0 8px; }
+  .bridge-eingabe input { flex: 1; min-width: 0; padding: 9px 12px; border: 0; border-radius: 10px; outline: none; background: var(--eingabe); color: var(--text); font: 16px var(--schrift); }
+  .bridge-eingabe input:focus { box-shadow: 0 0 0 3.5px rgba(var(--blau-rgb), .4); }
+  .palette.hilfe { background: var(--menue); }
+  textarea.auswahl { resize: vertical; line-height: 1.45; }
+</style>
+</head>
+<body>
+<button class="ueberspringen" type="button" onclick="document.getElementById('inhalt').focus()">Zum Inhalt springen</button>
+<header class="topnav">
+  <button class="tab" id="burger" type="button" aria-label="Seitenleiste ein- oder ausblenden"><span class="sym" style="width:18px;height:18px"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M9 5v14"/></svg></span></button>
+  <a class="brand" id="marke" href="#sessions/uebersicht" aria-label="Claude Deck, zur Übersicht"><img class="marke-bild" id="marke-bild" src="/icon-192.png?v=2" alt="" width="30" height="30"><span class="marke-text">Claude Deck <span>VPS</span></span></a>
+  <div class="werkzeugtitel" id="werkzeugtitel"></div>
+  <div class="rechts">
+    <form onsubmit="location.hash = 'suche/' + encodeURIComponent(this.q.value); return false"><label class="suche"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg><input name="q" placeholder="Suchen" minlength="2" required></label></form>
+    <span class="akzentwahl" id="akzente"><button type="button" data-akzent="blau" style="background:#0071e3" title="Blau"></button><button type="button" data-akzent="orange" style="background:#ff9500" title="Orange"></button><button type="button" data-akzent="gruen" style="background:#34c759" title="Grün"></button><button type="button" data-akzent="violett" style="background:#af52de" title="Violett"></button></span>
+    <button class="tab" type="button" id="theme">Hell</button>
+    <form method="post" action="/logout"><button class="tab" type="submit">Abmelden</button></form>
+  </div>
+</header>
+<div class="ticker" id="ticker" hidden></div>
+<div class="app">
+<nav class="seitenleiste" id="seitenleiste" aria-label="Hauptmenü">
+    <details class="dropdown"><summary data-gruppe="sessions"><span class="sym"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5A2.5 2.5 0 0 1 6.5 4h11A2.5 2.5 0 0 1 20 6.5v7a2.5 2.5 0 0 1-2.5 2.5H11l-4 3.5V16h-.5A2.5 2.5 0 0 1 4 13.5z"/></svg></span>Sessions</summary>
+      <a class="menuelink" href="#sessions/uebersicht">Übersicht</a>
+      <a class="menuelink" href="#sessions/verlauf">Verlauf</a>
+      <a class="menuelink" href="#sessions/modelle">Modelle</a>
+      <a class="menuelink" href="#sessions/projekte">Projekte</a>
+      <a class="menuelink" href="#sessions/werkzeuge">Werkzeuge</a>
+      <a class="menuelink" href="#sessions/limits">Limit-Verlauf</a>
+      <a class="menuelink" href="#sessions/verbrauch">Verbrauch</a>
+      <a class="menuelink" href="#sessions/fehler">Fehler</a>
+      <a class="menuelink" href="#sessions/kosten">Kosten</a>
+      <a class="menuelink" href="#sessions/liste">Alle Sessions</a>
+    </details>
+    <details class="dropdown"><summary data-gruppe="konfig"><span class="sym"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/></svg></span>Konfiguration</summary>
+      <a class="menuelink" href="#konfig/einstellungen">Einstellungen</a>
+      <a class="menuelink" href="#konfig/hooks">Hooks &amp; Rechte</a>
+      <a class="menuelink" href="#konfig/agents">Agents</a>
+      <a class="menuelink" href="#konfig/skills">Skills</a>
+      <a class="menuelink" href="#konfig/plugins">Plugins &amp; MCP</a>
+      <a class="menuelink" href="#konfig/gedaechtnis">Gedächtnis &amp; Regeln</a>
+      <a class="menuelink" href="#konfig/harnesses">Harnesses</a>
+      <a class="menuelink" href="#konfig/backups">Backups</a>
+    </details>
+    <details class="dropdown"><summary data-gruppe="vault"><span class="sym"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h9a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h9"/></svg></span>Vault &amp; Graph</summary>
+      <a class="menuelink" href="#vault/uebersicht">Übersicht</a>
+      <a class="menuelink" href="#vault/graph">Graph</a>
+      <a class="menuelink" href="#vault/communities">Communities &amp; God-Nodes</a>
+      <a class="menuelink" href="#vault/zeitleiste">Zeitleiste</a>
+      <a class="menuelink" href="#vault/ordner">Ordner</a>
+      <a class="menuelink" href="#vault/gesundheit">Gesundheit</a>
+    </details>
+    <a class="menuelink" href="#system"><span class="sym"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="2.5"/><path d="M9 2.5v3.5M15 2.5v3.5M9 18v3.5M15 18v3.5M2.5 9H6M2.5 15H6M18 9h3.5M18 15h3.5"/></svg></span>System</a>
+    <a class="menuelink" href="#konto"><span class="sym"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></span>Konto</a>
+    <form method="post" action="/logout" class="abmelden"><button class="menuelink" type="submit"><span class="sym"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 4H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h3M15 8l4 4-4 4M19 12H9"/></svg></span>Abmelden</button></form>
+</nav>
+<div class="scrim" id="scrim"></div><div class="kante" id="kante"></div>
+<main id="inhalt" tabindex="-1">
+  <p class="kleinzeile" id="kopfzeile"></p>
+  <h1 id="titel"></h1>
+  <div id="seite"></div>
+</main>
+</div>
+<div id="toasts" role="status" aria-live="polite"></div>
+<script src="/qrcode.js"></script>
+<script>
+const FARBEN = ["#0a84ff", "#ff9f0a", "#30d158", "#ffd60a", "#bf5af2", "#ff453a", "#64d2ff", "#8e8e93"];
+const fmt = n => n >= 1e6 ? (n/1e6).toFixed(1)+" M" : n >= 1e3 ? (n/1e3).toFixed(1)+" k" : String(n);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const karte = (titel, inhalt) => `<div class="karte"><p class="label">${titel}</p>${inhalt}</div>`;
+const stat = (v, l, ctx = "", spark = null) => `<div class="karte"><p class="label">${l}</p><p class="zahl"${Number.isInteger(v) ? ` data-ziel="${v}"` : ""}>${v}</p><p class="kontext">${ctx}</p>${spark ? `<div class="spark">${sparkline(spark)}</div>` : ""}</div>`;
+function sparkline(werte) {
+  if (werte.length < 2) return "";
+  const max = Math.max(...werte, 1), W = 100, H = 24;
+  const punkte = werte.map((v, i) => `${(i / (werte.length - 1) * W).toFixed(1)},${(H - 2 - (H - 4) * v / max).toFixed(1)}`).join(" ");
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><polyline fill="none" stroke="var(--blau)" stroke-width="1.5" vector-effect="non-scaling-stroke" points="${punkte}"/></svg>`;
+}
+const LADEN = '<div class="skelett" aria-busy="true"><div class="raster kpis">' + '<div class="karte"><span style="width:45%"></span><span style="height:34px;width:65%;margin-top:12px"></span></div>'.repeat(4) + '</div><div class="karte" style="height:220px"><span style="width:30%"></span></div></div>';
+const leer = (titel, hinweis) => `<div class="leer"><b>${titel}</b>${hinweis}</div>`;
+
+// Saeulendiagramm: data = [[label, wert]]
+function saeulen(data, farbe = FARBEN[0]) {
+  if (!data.length) return '<p class="leise">Keine Daten.</p>';
+  const W = 600, H = 190, L = 58, B = 24, max = Math.max(...data.map(d => d[1])) || 1, bw = (W - L) / data.length;
+  const bars = data.map(([k, v], i) => {
+    const h = (H - B - 8) * v / max;
+    return `<rect x="${L + i*bw + bw*.15}" y="${H - B - h}" width="${bw*.7}" height="${h}" rx="2" fill="${farbe}" data-tip="${esc(k)}: ${fmt(v)}"></rect>`;
+  }).join("");
+  const step = Math.ceil(data.length / 8);
+  const achse = data.map(([k], i) => i % step ? "" : `<text x="${L + i*bw + bw/2}" y="${H - 8}" text-anchor="middle">${esc(k.slice(5))}</text>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}"><line x1="${L}" x2="${W}" y1="${H-B}" y2="${H-B}" stroke="var(--trenner)"/>` +
+    `<text x="${L-6}" y="14" text-anchor="end">${fmt(max)}</text><text x="${L-6}" y="${H-B}" text-anchor="end">0</text>${bars}${achse}</svg>`;
+}
+
+// Ringdiagramm mit Legende: data = [[label, wert]]
+function ring(data) {
+  data = data.filter(d => d[1] > 0);
+  const sum = data.reduce((a, d) => a + d[1], 0) || 1, R = 15.9155;
+  let off = 0;
+  const teile = data.map(([k, v], i) => {
+    const p = 100 * v / sum, s = `<circle r="${R}" cx="21" cy="21" fill="none" stroke="${FARBEN[i % FARBEN.length]}" stroke-width="6" stroke-dasharray="${p} ${100-p}" stroke-dashoffset="${-off}" transform="rotate(-90 21 21)" data-tip="${esc(k)}: ${fmt(v)} (${p.toFixed(0)} %)"></circle>`;
+    off += p; return s;
+  }).join("");
+  const leg = data.map(([k, v], i) => `<li><span class="punkt" style="background:${FARBEN[i % FARBEN.length]}"></span>${esc(k)} <span class="leise">· ${fmt(v)} (${(100*v/sum).toFixed(0)} %)</span></li>`).join("");
+  return `<div class="donut"><svg viewBox="0 0 42 42">${teile}</svg><ul class="legende">${leg}</ul></div>`;
+}
+
+// Liniendiagramm 0-100 %: reihen = [{name, farbe, punkte: [[zeit_ms, prozent]]}]
+function linien(reihen) {
+  const alle = reihen.flatMap(r => r.punkte);
+  if (!alle.length) return leer("Noch keine Messpunkte", "Öffne in Claude Code /usage, dann entsteht der erste Punkt.");
+  const W = 600, H = 200, L = 52, B = 24, tmin = Math.min(...alle.map(p => p[0])), tmax = Math.max(...alle.map(p => p[0]));
+  const x = t => L + (t - tmin) / ((tmax - tmin) || 1) * (W - L - 8), y = p => 8 + (H - B - 8) * (1 - p / 100);
+  const gitter = [0, 50, 100].map(p => `<line x1="${L}" x2="${W}" y1="${y(p)}" y2="${y(p)}" stroke="var(--trenner)"/><text x="${L - 6}" y="${y(p) + 4}" text-anchor="end">${p} %</text>`).join("");
+  const kurven = reihen.map(r => `<polyline fill="none" stroke="${r.farbe}" stroke-width="2" points="${r.punkte.map(([t, p]) => `${x(t)},${y(p)}`).join(" ")}"/>`).join("");
+  const zeit = t => new Date(t).toLocaleString("de-DE", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+  const punkte = reihen.map(r => r.punkte.map(([t, p]) => `<circle cx="${x(t)}" cy="${y(p)}" r="3.5" fill="${r.farbe}"/><circle cx="${x(t)}" cy="${y(p)}" r="10" fill="transparent" data-tip="${r.name}: ${p} % (${zeit(t)})"/>`).join("")).join("");
+  const legende = reihen.map(r => `<li><span class="punkt" style="background:${r.farbe}"></span>${esc(r.name)}</li>`).join("");
+  return `<svg viewBox="0 0 ${W} ${H}">${gitter}${kurven}${punkte}<text x="${L}" y="${H - 6}">${zeit(tmin)}</text><text x="${W}" y="${H - 6}" text-anchor="end">${zeit(tmax)}</text></svg><ul class="legende" style="margin-top:8px">${legende}</ul>` +
+    `<p class="kontext">${tmax === tmin ? "Bisher ein Messpunkt. " : ""}Ein neuer Punkt entsteht nur, wenn Claude Code seine Limit-Werte aktualisiert, etwa wenn du in Claude Code <span class="mono">/usage</span> öffnest.</p>`;
+}
+const bytes = n => n >= 1e9 ? (n / 1e9).toFixed(1) + " GB" : n >= 1e6 ? (n / 1e6).toFixed(1) + " MB" : (n / 1e3).toFixed(0) + " KB";
+// Aktivitaetsraster wie bei GitHub: 26 Wochen, Spalte = Woche, Zeile = Wochentag (Mo oben)
+function heatmap(heat) {
+  const heute = new Date(); heute.setUTCHours(0, 0, 0, 0);
+  const start = new Date(heute); start.setUTCDate(heute.getUTCDate() - (heute.getUTCDay() + 6) % 7 - 25 * 7);
+  const max = Math.max(1, ...Object.values(heat)), Z = 14;
+  let zellen = "";
+  for (let i = 0; i < 26 * 7; i++) {
+    const d = new Date(start); d.setUTCDate(start.getUTCDate() + i);
+    if (d > heute) break;
+    const tag = d.toISOString().slice(0, 10), v = heat[tag] || 0, stufe = v ? Math.ceil(4 * v / max) : 0;
+    zellen += `<rect x="${Math.floor(i / 7) * Z}" y="${i % 7 * Z}" width="11" height="11" rx="2" fill="${stufe ? FARBEN[0] : "var(--rand)"}" fill-opacity="${stufe ? 0.25 + stufe * 0.19 : 0.35}" data-tip="${tag}: ${fmt(v)} Output"></rect>`;
+  }
+  return `<svg viewBox="0 0 ${26 * Z} ${7 * Z}" style="max-width:760px">${zellen}</svg>`;
+}
+function pinKarte(s, p) {
+  const markiert = s.sessions.filter(r => (p[r.id] || {}).pinned);
+  return markiert.length ? `<div class="karte tabelle" style="margin-bottom:18px"><p class="label">Markierte Sessions</p><table>${markiert.map(r => `<tr class="klick" onclick="location.hash='chat/${esc(r.id)}'" data-session="${esc(r.id)}">` +
+    `<td>★ ${esc(r.title || r.id.slice(0, 8))}<br><span class="leise">${esc(p[r.id].note)}</span></td><td class="leise">${r.last ? vor(new Date(r.last).getTime()) : ""}</td></tr>`).join("")}</table></div>` : "";
+}
+function heuteKarten(s, v) {
+  const tag = d => (s.daily.find(([k]) => k === d) || [0, { sessions: 0, messages: 0, output: 0 }])[1], sp = k => s.daily.slice(-14).map(([, z]) => z[k]);
+  const heute = tag(new Date().toISOString().slice(0, 10)), gestern = tag(new Date(Date.now() - 864e5).toISOString().slice(0, 10));
+  return `<p class="kleinzeile">Heute</p><div class="raster kpis">${stat(heute.sessions, "Sessions", `gestern ${gestern.sessions}`, sp("sessions"))}${stat(heute.messages, "Nachrichten von dir", `gestern ${gestern.messages}`, sp("messages"))}` +
+    `${stat(fmt(heute.output), "Output-Tokens", `gestern ${fmt(gestern.output)}`, sp("output"))}${stat(v.today_notes, "Notizen geändert", "im Vault")}</div><p class="kleinzeile">Gesamt</p>`;
+}
+async function postJson(url, body) {
+  const antwort = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json", "X-Deck": "1" }, body: JSON.stringify(body) });
+  if (antwort.status === 401) { location.href = "/login"; throw new Error("Anmeldung abgelaufen"); }
+  return { ok: antwort.ok, ...(await antwort.json()) };
+}
+async function pinSetzen(id, pinned, note) {
+  await postJson("/api/pins/" + id, { pinned, note });
+  daten.p = await api("/api/pins");
+  toast(pinned ? "Session markiert" : note ? "Notiz gespeichert" : "Markierung entfernt");
+}
+function toast(text) {
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = text;
+  document.getElementById("toasts").appendChild(el);
+  setTimeout(() => { el.classList.add("weg"); setTimeout(() => el.remove(), 320); }, 2200);
+}
+async function kopieren(text, meldung) {
+  try { await navigator.clipboard.writeText(text); toast(meldung); } catch (e) { console.warn("Zwischenablage:", e); toast("Kopieren nicht möglich"); }
+}
+// QR-Code lokal im Browser erzeugen: das Geheimnis verlaesst die Seite nicht
+function qrSvg(text) {
+  const qr = qrcode(0, "M"), rand = 4;
+  qr.addData(text);
+  qr.make();
+  const n = qr.getModuleCount();
+  let pfad = "";
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (qr.isDark(r, c)) pfad += `M${c + rand},${r + rand}h1v1h-1z`;
+  return `<svg viewBox="0 0 ${n + 2 * rand} ${n + 2 * rand}" role="img" aria-label="QR-Code für die Authenticator-App" shape-rendering="crispEdges"><rect width="100%" height="100%" fill="#fff"/><path d="${pfad}" fill="#000"/></svg>`;
+}
+function baum(n, offen = false) {
+  return `<details ${offen ? "open" : ""}><summary>${esc(n.name)} <span class="leise">· ${bytes(n.size)} · ${n.files} Dateien</span></summary>${n.children.map(c => baum(c)).join("")}</details>`;
+}
+const GB = n => (n / 1073741824).toFixed(1) + " GB";
+const balkenzeilen =(list, max = list.length ? list[0][1] : 1) => `<table>${list.map(([k, v]) =>
+  `<tr><td>${esc(k)}</td><td class="r">${fmt(v)}</td><td style="width:30%"><div class="balken" style="width:${100*v/max}%"></div></td></tr>`).join("")}</table>`;
+const modell = m => m.replace(/claude-/g, "");
+const beschreibung = list => `<table>${list.map(e => `<tr><td class="mono">${esc(e.name)}</td><td class="leise">${esc(e.description)}</td></tr>`).join("")}</table>`;
+const tag = (d, k) => d.daily.map(([datum, z]) => [datum, z[k]]);
+
+const SEITEN = {
+  "sessions/uebersicht": ["Claude Code", "Übersicht", ({ s, v, p }) => {
+    const t = s.totals, sp = k => s.daily.slice(-14).map(([, z]) => z[k]);
+    return `<div id="usage">${usageKarte()}</div><div id="live">${liveKarte()}</div>${pinKarte(s, p)}${heuteKarten(s, v)}<div class="raster kpis">${stat(s.sessions.length, "Sessions", `${t.messages} Nutzer-Nachrichten`, sp("sessions"))}${stat(fmt(t.input + t.cache_write), "Input-Tokens", "neu geschrieben", s.daily.slice(-14).map(([, z]) => z.input + z.cache_write))}` +
+      `${stat(fmt(t.cache_read), "Cache gelesen", "wiederverwendet", sp("cache_read"))}${stat(fmt(t.output), "Output-Tokens", "erzeugt", sp("output"))}</div>` +
+      `<div class="raster zwei">${karte("Output pro Tag (30 Tage)", saeulen(tag(s, "output")))}${karte("Output nach Modell", ring(s.by_model.map(([m, v]) => [modell(m), v])))}</div>`;
+  }],
+  "sessions/verlauf": ["Claude Code", "Verlauf", ({ s }) =>
+    `<div class="raster">${karte("Aktivität (Output-Tokens pro Tag, 26 Wochen)", heatmap(s.heat))}</div><div class="raster zwei">${karte("Output-Tokens pro Tag", saeulen(tag(s, "output")))}${karte("Sessions pro Tag", saeulen(tag(s, "sessions"), FARBEN[2]))}` +
+    `${karte("Neuer Input pro Tag", saeulen(s.daily.map(([d, z]) => [d, z.input + z.cache_write]), FARBEN[1]))}${karte("Cache gelesen pro Tag", saeulen(tag(s, "cache_read"), FARBEN[3]))}</div>`],
+  "sessions/modelle": ["Claude Code", "Modelle", ({ s }) =>
+    `<div class="raster zwei">${karte("Output nach Modell", ring(s.by_model.map(([m, v]) => [modell(m), v])))}${karte("Tokens", balkenzeilen(s.by_model.filter(([, v]) => v > 0).map(([m, v]) => [modell(m), v])))}</div>`],
+  "sessions/liste": ["Claude Code", "Alle Sessions", ({ s, p }) => `<div class="karte tabelle"><table><thead><tr><th>Titel</th><th class="nur-gross">Modell</th><th>Zuletzt</th><th class="r nur-gross">Nachr.</th><th class="r">Output</th></tr></thead><tbody>` +
+    s.sessions.map(r => `<tr class="klick" onclick="location.hash='chat/${esc(r.id)}'" data-session="${esc(r.id)}"><td>${(p[r.id] || {}).pinned ? "★ " : ""}${esc(r.title || r.id.slice(0, 8))}${(p[r.id] || {}).note ? `<br><span class="leise">${esc(p[r.id].note)}</span>` : ""}</td><td class="leise nur-gross">${esc(modell(r.models.join(", ")))}</td><td class="leise">${r.last ? new Date(r.last).toLocaleString("de-DE") : ""}</td>` +
+      `<td class="r nur-gross">${r.messages}</td><td class="r">${fmt(r.output)}</td></tr>`).join("") + "</tbody></table></div>"],
+  "sessions/projekte": ["Claude Code", "Projekte", ({ s }) => karte(`${s.projects.length} Ordner`, `<table><thead><tr><th>Ordner</th><th class="r">Sessions</th><th class="r">Nachr.</th><th class="r">Output</th></tr></thead><tbody>` +
+    s.projects.map(([cwd, p]) => `<tr><td class="mono">${esc(cwd)}</td><td class="r">${p.sessions}</td><td class="r">${p.messages}</td><td class="r">${fmt(p.output)}</td></tr>`).join("") + "</tbody></table>")],
+  "sessions/werkzeuge": ["Claude Code", "Werkzeuge", ({ s }) => `<div class="raster zwei">${karte("Aufrufe nach Werkzeug", balkenzeilen(s.tools))}${karte("Anteil", ring(s.tools))}</div>`],
+  "sessions/limits": ["Claude Code", "Limit-Verlauf", ({ h }) => karte("Auslastung über die Zeit", linien([
+    { name: "Session (5 Std)", farbe: FARBEN[0], punkte: h.filter(r => r.session != null).map(r => [r.t, r.session]) },
+    { name: "Woche (alle Modelle)", farbe: FARBEN[1], punkte: h.filter(r => r.weekly_all != null).map(r => [r.t, r.weekly_all]) }]))],
+  "sessions/kosten": ["Claude Code", "Kosten", ({ k }) =>
+    `<div class="raster kpis">${stat("$" + k.total.toFixed(2), "Geschätzte Kosten", "laut costs.jsonl, alle erfassten Tage")}</div>` +
+    `<div class="raster zwei">${karte("Kosten pro Tag in $ (30 Tage)", saeulen(k.daily, FARBEN[1]))}${karte("Kosten nach Modell in $", ring(k.by_model.map(([m, v]) => [modell(m), v])))}</div>`],
+  "konfig/einstellungen": ["Konfiguration", "Einstellungen", ({ c }) =>
+    karte("settings.json (Geheimnisse maskiert, nur lesbar)", `<pre class="roh">${esc(JSON.stringify(c.settings, null, 2))}</pre>`)],
+  "konfig/hooks": ["Konfiguration", "Hooks & Rechte", ({ c }) =>
+    `<div class="raster zwei">${karte("Hooks aus Plugins", Object.keys(c.hooks).length ? `<table>${Object.entries(c.hooks).map(([p, e]) =>
+      `<tr><td>${esc(p)}</td><td class="leise">${Object.entries(e).map(([ev, n]) => `${esc(ev)} (${n})`).join(", ")}</td></tr>`).join("")}</table>` : leer("Keine Hooks aus Plugins", "Installierte Plugins bringen ihre Hooks mit, hier ist keiner aktiv."))}` +
+    `${karte("Erlaubte Befehle (permissions.allow)", `<ul>${((c.settings.permissions || {}).allow || []).map(r => `<li class="mono">${esc(r)}</li>`).join("") || '<li class="leise">Nichts vorab erlaubt, Claude fragt bei jedem Werkzeug nach.</li>'}</ul>`)}</div>`],
+  "konfig/agents": ["Konfiguration", "Agents", ({ c }) => karte(`${c.agents.length} Agents`, beschreibung(c.agents))],
+  "konfig/skills": ["Konfiguration", "Skills", ({ c }) => karte(`${c.skills.length} eigene Skills`, beschreibung(c.skills))],
+  "konfig/plugins": ["Konfiguration", "Plugins & MCP", ({ c }) =>
+    `<div class="raster zwei">${karte(`${c.plugins.length} Plugins`, `<table>${c.plugins.map(p => `<tr><td>${esc(p.name)}</td><td class="leise">${esc(p.versions.join(", "))}</td></tr>`).join("")}</table>`)}` +
+    `${karte("MCP-Server", Object.keys(c.mcp).length ? `<pre class="roh">${esc(JSON.stringify(c.mcp, null, 2))}</pre>` : leer("Keine MCP-Server", "Sie erscheinen hier, sobald du in Claude Code einen mit „claude mcp add“ einträgst."))}</div>`],
+  "konfig/gedaechtnis": ["Konfiguration", "Gedächtnis & Regeln", ({ c }) =>
+    `<div class="raster zwei">${karte(`${c.memory.length} Gedächtnis-Dateien`, beschreibung(c.memory))}${karte(`${c.rules.length} Regeldateien`, `<ul>${c.rules.map(r => `<li class="mono">${esc(r)}</li>`).join("")}</ul>`)}</div>`],
+  "konfig/backups": ["Konfiguration", "Backups", ({ b }) => karte(`${b.length} Sicherungen (nur Ansicht)`, `<table><thead><tr><th>Pfad</th><th>Art</th><th class="r">Größe</th><th>Geändert</th></tr></thead><tbody>` +
+    b.map(i => `<tr><td class="mono">${esc(i.path)}</td><td class="leise">${i.dir ? "Ordner" : "Datei"}</td><td class="r">${bytes(i.size)}</td><td class="leise">${new Date(i.mtime * 1000).toLocaleString("de-DE")}</td></tr>`).join("") + "</tbody></table>")],
+  "konfig/harnesses": ["Konfiguration", "Harnesses", ({ k }) => karte("Installierte Werkzeuge", `<table>${k.harnesses.map(([n, p]) =>
+    `<tr><td>${esc(n)}</td><td>${p ? '<span style="color:var(--ok)">installiert</span>' : '<span class="leise">nicht gefunden</span>'}</td><td class="leise mono">${esc(p || "")}</td></tr>`).join("")}</table>`)],
+  "sessions/verbrauch": ["Claude Code", "Verbrauch", ({ x }) => `<div class="raster zwei">` +
+    karte(`Anteil am Token-Verbrauch der letzten ${x.days} Tage`, `<table>${x.sessions.map(r => `<tr class="klick" onclick="location.hash='chat/${esc(r.id)}'" data-session="${esc(r.id)}"><td>${esc(r.title || r.id.slice(0, 8))}</td>` +
+      `<td class="r">${fmt(r.tokens)}</td><td class="r">${r.share} %</td><td style="width:22%"><div class="balken" style="width:${r.share}%"></div></td></tr>`).join("")}</table>` +
+      '<p class="kontext">Tokens = neuer Input + Output. Das ist kein Prozentwert deines Limits.</p>') + karte("Werkzeug-Aufrufe gesamt", balkenzeilen(x.tools)) + "</div>", "/api/ranking"],
+  "sessions/fehler": ["Claude Code", "Fehler", ({ x }) => `<div class="raster kpis">${stat(x.total, "Fehlgeschlagene Aufrufe", "über alle Sessions")}</div><div class="raster zwei">` +
+    karte("Fehler nach Werkzeug", balkenzeilen(x.by_tool)) + karte(`Neueste ${x.errors.length}`, `<table>${x.errors.map(e => `<tr class="klick" onclick="location.hash='chat/${esc(e.id)}'" data-session="${esc(e.id)}"><td><b>${esc(e.tool)}</b> ` +
+      `<span class="leise">· ${esc(e.title || e.id.slice(0, 8))} · ${e.ts ? new Date(e.ts).toLocaleString("de-DE") : ""}</span><br><span class="leise mono">${esc(e.text.slice(0, 160))}</span></td></tr>`).join("")}</table>`) + "</div>", "/api/errors"],
+  "vault/ordner": ["Obsidian · graphify", "Ordner", ({ x }) => karte(`${bytes(x.size)} in ${x.files} Dateien`, `<div class="baum">${baum(x, true)}</div>`), "/api/vault-tree"],
+  "vault/gesundheit": ["Obsidian · graphify", "Gesundheit", ({ x }) => {
+    const liste = (titel, gesamt, eintraege, hinweis) => karte(`${titel}: ${gesamt}`, `<p class="kontext">${hinweis}</p><ul>${eintraege.map(f => `<li class="mono">${esc(f)}</li>`).join("")}</ul>` +
+      (gesamt > eintraege.length ? `<p class="leise">+ ${gesamt - eintraege.length} weitere</p>` : ""));
+    return `<div class="raster kpis">${stat(x.notes, "Notizen", "ohne graphify-Ausgabe")}</div><div class="raster zwei">` +
+      liste("Ohne eingehende Verknüpfung", x.orphans_total, x.orphans, "Keine andere Notiz verlinkt sie mit [[…]].") +
+      liste("Nicht in der Zeitleiste", x.not_in_timeline_total, x.not_in_timeline, "Diese Notizen fehlen in Zeitleiste.md.") + "</div>";
+  }, "/api/vault-health"],
+  "vault/uebersicht": ["Obsidian · graphify", "Übersicht", ({ v }) =>
+    `<div class="raster kpis">${stat(v.notes, "Notizen", "Markdown im Vault")}${stat(v.nodes, "Graph-Knoten", `${v.edges} Kanten`)}` +
+    `${stat(v.communities.length, "Communities", "größte zuerst")}${stat(new Date(v.graph_built * 1000).toLocaleDateString("de-DE"), "Graph gebaut", "Stand von graph.json")}` +
+    `${stat(v.stale_notes, "Notizen neuer als Graph", v.stale_notes ? "Aktualisieren: graphify &lt;vault&gt; --update" : "Graph ist aktuell")}</div>` +
+    `<div class="raster zwei">${karte("Knotentypen", ring(v.types))}${karte("Kanten nach Sicherheit", ring(v.confidence))}${karte("Notizen pro Ordner", balkenzeilen(v.folders))}</div>`],
+  "vault/graph": ["Obsidian · graphify", "Graph", () => '<iframe src="/graph.html" title="graphify Graph"></iframe>'],
+  "vault/communities": ["Obsidian · graphify", "Communities & God-Nodes", ({ v }) =>
+    `<div class="raster zwei">${karte("Communities (Knoten)", balkenzeilen(v.communities))}${karte("God-Nodes (meiste Kanten)", balkenzeilen(v.gods))}</div>`],
+  "vault/zeitleiste": ["Obsidian · graphify", "Zeitleiste", ({ v }) =>
+    `<div class="raster zwei">${karte("Notizen pro Tag", saeulen(v.per_day.slice(-30), FARBEN[2]))}` +
+    karte("Zuletzt", v.timeline.map(d => `<p><b>${esc(d.date)}</b></p><ul>${d.notes.slice(0, 8).map(n => `<li>${esc(n)}</li>`).join("")}</ul>` +
+      (d.notes.length > 8 ? `<p class="leise">+ ${d.notes.length - 8} weitere</p>` : "")).join("")) + "</div>"],
+};
+
+const vor = ms => { const m = Math.round((Date.now() - ms) / 60000); return m < 1 ? "gerade eben" : m < 60 ? `vor ${m} Min` : `vor ${(m / 60).toFixed(1)} Std`; };
+const STATUS = { busy: "arbeitet", idle: "wartet" };
+function liveKarte() {
+  const l = daten && daten.live;
+  if (!l) return "";
+  const zeilen = l.live.map(r => `<tr class="klick" onclick="location.hash='chat/${esc(r.sessionId)}'" data-session="${esc(r.sessionId)}" title="Chat öffnen"><td>${esc(r.name || String(r.sessionId).slice(0, 8))}</td>` +
+    `<td><span class="statuszelle"><span class="punkt${r.status === "busy" ? " puls" : ""}" style="background:${r.status === "busy" ? "var(--ok)" : "var(--leise)"}"></span>${esc(STATUS[r.status] || r.status || "?")}</span></td>` +
+    `<td class="leise nur-gross">${esc(r.kind || "")}</td><td class="leise mono nur-gross">${esc(r.cwd || "")}</td><td class="leise nur-gross">${r.startedAt ? vor(r.startedAt) : ""}</td>` +
+    `<td class="leise">${r.updatedAt ? vor(r.updatedAt) : ""}</td>` +
+    `<td>${r.context ? `<span class="kontextzelle">${fmt(r.context)}<span class="kontextbalken" style="width:${Math.min(100, r.context / 1e4)}%"></span></span>` : ""}</td><td class="r nur-gross">${r.pid}</td></tr>`).join("");
+  return `<div class="karte tabelle" style="margin-bottom:18px"><p class="label">Laufende Sessions · ${l.live.length} aktiv, ${l.spare} vorgewärmt</p>` +
+    (zeilen ? `<table><thead><tr><th>Name</th><th>Status</th><th class="nur-gross">Art</th><th class="nur-gross">Ordner</th><th class="nur-gross">Gestartet</th><th>Aktivität</th><th>Kontext</th><th class="r nur-gross">PID</th></tr></thead><tbody>${zeilen}</tbody></table><p class="kontext" style="margin-top:10px">Aktualisiert alle ${einstellungen.takt} s. Kontext = Tokens der letzten Antwort, Balken relativ zu 1 Mio (Fenstergröße je Modell unbekannt).</p>` : leer("Keine laufende Session", "Starte Claude Code, dann erscheint sie hier.")) + "</div>";
+}
+const LIMIT_NAMEN = { session: "Aktuelle Session (5 Std)", weekly_all: "Woche · alle Modelle" };
+const dauer = iso => { const m = Math.max(0, Math.round((new Date(iso) - Date.now()) / 60000)); return m >= 1440 ? `${Math.floor(m / 1440)} T ${Math.floor(m % 1440 / 60)} Std` : m >= 60 ? `${Math.floor(m / 60)} Std ${m % 60} Min` : `${m} Min`; };
+function prognose(art, reset) {
+  const punkte = ((daten && daten.h) || []).filter(r => r[art] != null).slice(-8), a = punkte[0], b = punkte[punkte.length - 1];
+  if (!a || b.t <= a.t || b[art] <= a[art]) return "";
+  const voll = b.t + (100 - b[art]) * (b.t - a.t) / (b[art] - a[art]), resetMs = reset ? new Date(reset).getTime() : Infinity;
+  return voll < resetMs ? `Prognose: bei diesem Tempo voll in etwa ${minuten(Math.max(0, Math.round((voll - Date.now()) / 60000)))} (grobe Schätzung)` : "Prognose: reicht bis zum Reset (grobe Schätzung)";
+}
+function limitZeile(name, prozent, reset, prog = "") {
+  const farbe = prozent >= 90 ? "var(--leer)" : prozent >= 70 ? "var(--knapp)" : "var(--ok)", R = 15.9155, voll = Math.min(prozent, 100);
+  return `<div class="ring"><svg viewBox="0 0 42 42"><circle cx="21" cy="21" r="${R}" fill="none" stroke="var(--fuellung)" stroke-width="4.4"/>` +
+    `<circle cx="21" cy="21" r="${R}" fill="none" stroke="${farbe}" stroke-width="4.4" stroke-linecap="round" stroke-dasharray="${voll} ${100 - voll}" transform="rotate(-90 21 21)"/>` +
+    `<text class="prozent" x="21" y="24" text-anchor="middle">${prozent} %</text></svg><div>${esc(name)}</div><p class="kontext">${100 - prozent} % übrig</p>` +
+    `<p class="kontext">${reset ? `Reset in ${dauer(reset)}` : "kein Reset-Zeitpunkt"}</p>${prog ? `<p class="kontext">${esc(prog)}</p>` : ""}</div>`;
+}
+function höchsteAuslastung() {
+  const u = daten && daten.usage;
+  return u ? Math.max(0, ...u.limits.map(l => l.percent), ...Object.values(u.per_model).map(v => v.utilization)) : 0;
+}
+function titelAktualisieren() {
+  const p = höchsteAuslastung();
+  document.title = (p >= 80 ? `⚠ ${p} % · ` : "") + "Claude Deck";
+}
+function usageKarte() {
+  const u = daten && daten.usage;
+  if (!u) return "";
+  const zeilen = u.limits.map(l => limitZeile(LIMIT_NAMEN[l.kind] || l.kind, l.percent, l.resets_at, prognose(l.kind, l.resets_at))).join("") +
+    Object.entries(u.per_model).map(([k, v]) => limitZeile(k.replace(/^seven_day_/, "Woche · "), v.utilization, v.resets_at)).join("");
+  const alt = (Date.now() - u.fetched) / 60000;
+  const extra = u.extra_usage.is_enabled ? `Zusatznutzung an` : "Zusatznutzung aus";
+  const hoechste = höchsteAuslastung();
+  const warnung = hoechste >= 80 ? `<p class="warnung${hoechste >= 95 ? " rot" : ""}">Achtung: ${hoechste} % eines Limits verbraucht.</p>` : "";
+  return `<div class="karte" style="margin-bottom:18px"><p class="label">Nutzungslimits (/usage) · ${extra}</p>${warnung}<div class="ringe">${zeilen}</div>` +
+    `<p class="kontext">Stand: ${vor(u.fetched)}${alt > 10 ? " · veraltet: Claude Code aktualisiert den Cache nur bei aktiver Nutzung" : ""}. Prozent, keine Token-Zahl.</p></div>`;
+}
+async function api(url) {
+  const antwort = await fetch(url);
+  if (antwort.status === 401) { location.href = "/login"; throw new Error("Anmeldung abgelaufen"); }
+  return antwort.json();
+}
+function tickerZeigen() {
+  const el = document.getElementById("ticker"), aktive = daten && daten.live ? daten.live.live : [];
+  el.hidden = !aktive.length || !einstellungen.ticker;
+  document.getElementById("marke-bild").classList.toggle("arbeitet", aktive.some(r => r.status === "busy"));
+  el.innerHTML = aktive.map(r => `<span><span class="punkt${r.status === "busy" ? " puls" : ""}" style="display:inline-block;background:${r.status === "busy" ? "var(--ok)" : "var(--leise)"}"></span> ` +
+    `<b>${esc(r.name || String(r.sessionId).slice(0, 8))}</b> ${esc(r.action || (r.status === "busy" ? "arbeitet" : "wartet"))}</span>`).join("");
+}
+const letzterStand = {};
+async function liveLaden() {
+  try {
+    [daten.live, daten.usage, daten.h] = await Promise.all(["/api/live", "/api/usage", "/api/usage-history"].map(api));
+  } catch { return; }
+  titelAktualisieren();
+  tickerZeigen();
+  const karten = [["live", liveKarte, daten.live.live.map(r => [r.sessionId, r.status, r.action, r.context])], ["usage", usageKarte, daten.usage.limits]];
+  for (const [id, bauen, stand] of karten) {
+    const el = document.getElementById(id), json = JSON.stringify(stand);
+    if (!el) continue;
+    el.innerHTML = bauen();
+    if (id in letzterStand && letzterStand[id] !== json) { el.classList.remove("aufblitzen"); void el.offsetWidth; el.classList.add("aufblitzen"); }
+    letzterStand[id] = json;
+  }
+  labelTabellen();
+}
+const einstellungen = { glas: true, bewegung: true, ticker: true, takt: 5, schrift: 100 };
+try { Object.assign(einstellungen, JSON.parse(localStorage.getItem("deck-einstellungen") || "{}")); } catch (e) { console.warn("Einstellungen nicht lesbar:", e); }
+einstellungen.takt = Math.min(60, Math.max(2, Number(einstellungen.takt) || 5));
+einstellungen.schrift = Math.min(140, Math.max(80, Number(einstellungen.schrift) || 100));
+let taktTimer;
+function taktStarten() {
+  clearInterval(taktTimer);
+  taktTimer = setInterval(() => daten && liveLaden(), einstellungen.takt * 1000);
+}
+function einstellungAnwenden() {
+  document.body.classList.toggle("kein-glas", !einstellungen.glas);
+  document.body.classList.toggle("ruhe", !einstellungen.bewegung);
+  document.documentElement.style.fontSize = einstellungen.schrift + "%";
+  taktStarten();
+  tickerZeigen();
+}
+function einstellungSetzen(schluessel, wert) {
+  einstellungen[schluessel] = wert;
+  try { localStorage.setItem("deck-einstellungen", JSON.stringify(einstellungen)); } catch (e) { console.warn("Einstellungen nicht gespeichert:", e); }
+  einstellungAnwenden();
+}
+
+const GRUPPEN = { sessions: ["Sessions", "#sessions/uebersicht"], konfig: ["Konfiguration", "#konfig/einstellungen"], vault: ["Vault & Graph", "#vault/uebersicht"] };
+const SYSTEMTEXT = /^\s*<(system-reminder|command-|local-command|user-prompt-submit-hook)/;
+function nachrichtHtml(m) {
+  const zeit = m.ts ? new Date(m.ts).toLocaleTimeString("de-DE") : "";
+  const teile = m.blocks.map(b => {
+    if (b.type === "text" && SYSTEMTEXT.test(b.text)) return `<details><summary>Systemnachricht</summary><pre>${esc(b.text)}</pre></details>`;
+    if (b.type === "text") return `<div class="text">${esc(b.text)}</div>`;
+    if (b.type === "thinking") return `<details><summary>Gedanken</summary><pre>${esc(b.text)}</pre></details>`;
+    if (b.type === "diff") return `<details class="diff"><summary>Änderung: ${esc(b.file)}</summary><div class="diffbox">${b.old.split("\n").map(l => `<div class="dz del">- ${esc(l)}</div>`).join("")}` +
+      `${b.new.split("\n").map(l => `<div class="dz neu">+ ${esc(l)}</div>`).join("")}</div></details>`;
+    if (b.type === "tool_use") return `<details><summary>Werkzeug: ${esc(b.name)}</summary><pre>${esc(b.text)}</pre></details>`;
+    return `<details><summary>${b.error ? "Fehler" : "Ergebnis"}</summary><pre class="${b.error ? "fehler" : ""}">${esc(b.text)}</pre></details>`;
+  }).join("");
+  const klassen = `${m.blocks.some(b => b.type === "diff") ? " hat-diff" : ""}${m.blocks.some(b => b.error) ? " hat-fehler" : ""}`;
+  if (m.blocks.every(b => b.type === "tool_result")) return `<div class="nachricht werkzeug${klassen}">${teile}</div>`;
+  return `<div class="nachricht ${m.role}${klassen}"><div class="avatar">${m.role === "user" ? "D" : "C"}</div><div class="blase"><p class="wer">${m.role === "user" ? "Du" : "Claude"} · ${zeit}</p>${teile}</div></div>`;
+}
+
+let chatTimer;
+const minuten = m => m >= 60 ? `${Math.floor(m / 60)} Std ${m % 60} Min` : `${m} Min`;
+function alsMarkdown(titel, nachrichten) {
+  const teile = nachrichten.map(m => {
+    const text = m.blocks.map(b => b.type === "text" && !SYSTEMTEXT.test(b.text) ? b.text
+      : b.type === "diff" ? `\`${b.file}\`\n\`\`\`diff\n${b.old.split("\n").map(l => "- " + l).join("\n")}\n${b.new.split("\n").map(l => "+ " + l).join("\n")}\n\`\`\`` : "").filter(Boolean).join("\n\n");
+    return text ? `## ${m.role === "user" ? "Du" : "Claude"} · ${m.ts ? new Date(m.ts).toLocaleString("de-DE") : ""}\n\n${text}` : "";
+  }).filter(Boolean);
+  return `# ${titel}\n\n${teile.join("\n\n")}\n`;
+}
+function herunterladen(name, inhalt) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([inhalt], { type: "text/markdown" }));
+  a.download = name;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+async function chatSeite(id) {
+  let gezeigt = 0, titel = id.slice(0, 8);
+  const alle = [];
+  document.getElementById("seite").innerHTML = '<p><a href="#sessions/uebersicht">← zurück</a></p>' +
+    '<div class="chatkopf"><div class="chatwerkzeug"><b id="chattitel"></b><span class="leise" id="chatdauer"></span></div><div class="chatwerkzeug"><button class="tab" id="stern" type="button"></button><input id="notiz" placeholder="Notiz zu dieser Session …" maxlength="200">' +
+    '<button class="tab" id="resume" type="button">Befehl kopieren</button><button class="tab" id="export" type="button">Markdown</button></div>' +
+    '<div class="segment"><button class="seg aktiv" data-filter="" type="button">Alles</button><button class="seg" data-filter="user" type="button">Nur du</button>' +
+    '<button class="seg" data-filter="diff" type="button">Änderungen</button><button class="seg" data-filter="fehler" type="button">Fehler</button></div></div><div id="chatinfo"></div><div id="chat"></div>';
+  const pin = () => (daten && daten.p && daten.p[id]) || { pinned: false, note: "" };
+  const stern = document.getElementById("stern"), notiz = document.getElementById("notiz");
+  const pinZeigen = () => { stern.textContent = pin().pinned ? "★ Markiert" : "☆ Markieren"; notiz.value = pin().note; };
+  pinZeigen();
+  stern.onclick = async () => { await pinSetzen(id, !pin().pinned, notiz.value); pinZeigen(); };
+  notiz.onchange = () => pinSetzen(id, pin().pinned, notiz.value);
+  document.getElementById("resume").onclick = () => kopieren(`claude --resume ${id}`, "Befehl kopiert");
+  document.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => {
+    document.getElementById("chat").dataset.filter = b.dataset.filter;
+    document.querySelectorAll("[data-filter]").forEach(o => o.classList.toggle("aktiv", o === b));
+  });
+  document.getElementById("export").onclick = () => { herunterladen(`${new Date().toISOString().slice(0, 10)} Chat ${titel.replace(/[\\/:*?"<>|]/g, "")}.md`, alsMarkdown(titel, alle)); toast("Markdown geladen"); };
+  async function nachladen() {
+    if (location.hash !== "#chat/" + id) return;
+    let d;
+    try { d = await api(`/api/chat/${encodeURIComponent(id)}?after=${gezeigt}`); } catch { return; }
+    titel = d.title || titel;
+    document.getElementById("titel").textContent = titel;
+    const sess = daten && daten.s.sessions.find(r => r.id === id);
+    const dauerMin = d.first && d.last ? Math.round((new Date(d.last) - new Date(d.first)) / 60000) : 0;
+    document.getElementById("chattitel").textContent = titel;
+    document.getElementById("chatdauer").textContent = ` · ${minuten(dauerMin)} · ${d.total} Nachrichten`;
+    const kennzahlen = [`Dauer ${minuten(dauerMin)}`, `${d.total} Nachrichten`, sess ? `${fmt(sess.output)} Output · ${fmt(sess.input + sess.cache_write)} Input neu` : "", d.cost ? `≈ $${d.cost} geschätzt` : ""].filter(Boolean).join(" · ");
+    document.getElementById("chatinfo").innerHTML = `<div class="karte" style="margin-bottom:18px"><p class="kontext">${esc(d.cwd)}${d.branch ? " · " + esc(d.branch) : ""}</p><p>${esc(kennzahlen)}</p>` +
+      `<div class="chips" style="margin-top:8px">${d.tools.map(([n, c]) => `<span>${esc(n)} · ${c}</span>`).join("")}</div>` +
+      (d.files.length ? `<details><summary class="leise">${d.files.length} geänderte Dateien</summary><ul>${d.files.map(f => `<li class="mono">${esc(f)}</li>`).join("")}</ul></details>` : "") + "</div>";
+    if (!d.messages.length) return;
+    const unten = innerHeight + scrollY >= document.body.scrollHeight - 80;
+    document.getElementById("chat").insertAdjacentHTML("beforeend", d.messages.map(nachrichtHtml).join(""));
+    alle.push(...d.messages);
+    gezeigt = d.total;
+    if (unten) scrollTo(0, document.body.scrollHeight);
+  }
+  await nachladen();
+  scrollTo(0, document.body.scrollHeight);
+  chatTimer = setInterval(nachladen, 3000);
+}
+
+function kopf(zeile, titel, html) {
+  document.getElementById("kopfzeile").textContent = zeile;
+  document.getElementById("titel").textContent = titel;
+  document.getElementById("seite").innerHTML = html;
+}
+function zugriffKarte(rows) {
+  const stunde = Date.now() - 36e5, fehler = rows.filter(r => ["fehlschlag", "sperre"].includes(r.event) && new Date(r.t).getTime() > stunde).length;
+  return (fehler >= 5 ? `<p class="warnung rot">Achtung: ${fehler} fehlgeschlagene Anmeldungen in der letzten Stunde.</p>` : "") +
+    karte("Anmeldungen (letzte 100)", `<table><thead><tr><th>Zeit</th><th>IP</th><th>Ereignis</th></tr></thead><tbody>` + rows.map(r =>
+      `<tr><td class="leise">${new Date(r.t).toLocaleString("de-DE")}</td><td class="mono">${esc(r.ip)}</td><td class="${["fehlschlag", "sperre"].includes(r.event) ? "dienst-aus" : ""}">${esc(r.event)}</td></tr>`).join("") + "</tbody></table>");
+}
+function dienstKarten(d) {
+  const sync = d.services.find(s => s.name === "obsidian-sync");
+  const zeilen = d.services.map(s => `<tr><td>${esc(s.name)}</td><td class="${s.state === "active" ? "dienst-ok" : "dienst-aus"}">${esc(s.state)}</td><td class="leise nur-gross">${esc(s.since)}</td>` +
+    `<td><details><summary class="leise">Log</summary><pre class="roh">${esc(s.log.join("\n"))}</pre></details></td></tr>`).join("");
+  return `<div class="raster zwei">${karte("Dienste (alle 30 s aktualisiert)", `<table><thead><tr><th>Dienst</th><th>Status</th><th class="nur-gross">Seit</th><th></th></tr></thead><tbody>${zeilen}</tbody></table>`)}` +
+    `${karte("Obsidian-Sync", `<p class="zahl klein" style="font-size:26px"><span class="${sync.state === "active" ? "dienst-ok" : "dienst-aus"}">${sync.state === "active" ? "läuft" : esc(sync.state)}</span></p>` +
+      `<p class="kontext">Letzte Änderung im Vault: ${d.vault_newest ? vor(d.vault_newest * 1000) : "unbekannt"}. Ein Dauer-Sync überträgt Änderungen sofort, bleibt der Wert lange alt, ist das normal, solange du nichts schreibst.</p>`)}</div>`;
+}
+async function systemSeite() {
+  kopf("VPS", "System", LADEN);
+  let dienste, zugriffe, tick = 0;
+  async function laden() {
+    let d;
+    try {
+      d = await api("/api/system");
+      if (tick++ % 6 === 0) [dienste, zugriffe] = await Promise.all(["/api/services", "/api/access"].map(api));
+    } catch { return; }
+    const ram = 100 * (1 - d.mem_available / d.mem_total), platte = 100 * d.disk_used / d.disk_total;
+    document.getElementById("seite").innerHTML = `<div class="raster kpis">${stat(d.load.map(l => l.toFixed(2)).join(" · "), "Last (1 · 5 · 15 Min)", `${d.cpus} CPU-Kerne`)}` +
+      `${stat(ram.toFixed(0) + " %", "Arbeitsspeicher", `${GB(d.mem_total - d.mem_available)} von ${GB(d.mem_total)}`)}${stat(platte.toFixed(0) + " %", "Festplatte", `${GB(d.disk_used)} von ${GB(d.disk_total)}`)}` +
+      `${stat((d.uptime / 86400).toFixed(1) + " T", "Laufzeit", "seit dem letzten Neustart")}</div>${dienstKarten(dienste)}${zugriffKarte(zugriffe)}` +
+      karte("Prozesse nach CPU (aktualisiert alle 5 s)", `<table><thead><tr><th class="r">PID</th><th class="r">CPU %</th><th class="r">RAM %</th><th>Befehl</th></tr></thead><tbody>` +
+        d.top.map(([pid, cpu, mem, name]) => `<tr><td class="r">${esc(pid)}</td><td class="r">${esc(cpu)}</td><td class="r">${esc(mem)}</td><td class="mono">${esc(name)}</td></tr>`).join("") + "</tbody></table>");
+  }
+  await laden();
+  chatTimer = setInterval(laden, 5000);
+}
+const schalterZeile = (id, titel, hinweis, an) => `<div class="zeile"><div>${titel}${hinweis ? `<small>${hinweis}</small>` : ""}</div><button class="schalter" type="button" role="switch" id="${id}" aria-checked="${an}" aria-label="${titel}"></button></div>`;
+const stepperZeile = (id, titel, wert, einheit) => `<div class="zeile"><div>${titel}</div><div class="stepper"><button type="button" data-schritt="-1" aria-label="${titel} verringern">−</button><output id="${id}">${wert}${einheit}</output><button type="button" data-schritt="1" aria-label="${titel} erhöhen">+</button></div></div>`;
+function darstellungKarte() {
+  const e = einstellungen, dunkel = document.documentElement.dataset.theme !== "hell", akzent = document.documentElement.dataset.akzent;
+  const punkte = [["blau", "#0071e3"], ["violett", "#af52de"], ["orange", "#ff9500"], ["gruen", "#34c759"]].map(([n, f]) => `<button type="button" data-akzent="${n}" style="background:${f}" aria-label="Akzentfarbe ${n}" class="${akzent === n ? "aktiv" : ""}"></button>`).join("");
+  return karte("Darstellung", schalterZeile("s-dunkel", "Dunkles Design", "Sonst folgt es dem System", dunkel) + schalterZeile("s-nav", "Seitenleiste", "", !document.body.classList.contains("nav-zu")) +
+    schalterZeile("s-glas", "Glas-Effekte", "Unschärfe und Lichtkanten", e.glas) + schalterZeile("s-bew", "Bewegung", "Animationen und Übergänge", e.bewegung) + schalterZeile("s-ticker", "Live-Leiste", "Letzte Aktion laufender Sessions", e.ticker) +
+    stepperZeile("t-takt", "Aktualisierung", e.takt, " s") + stepperZeile("t-schrift", "Schriftgröße", e.schrift, " %") + `<div class="zeile"><div>Akzentfarbe</div><div class="farbpunkte">${punkte}</div></div>`);
+}
+function darstellungVerdrahten() {
+  const schalten = (id, aktion) => { const el = document.getElementById(id); el.onclick = () => { const an = el.getAttribute("aria-checked") !== "true"; el.setAttribute("aria-checked", an); aktion(an); }; };
+  schalten("s-dunkel", an => themaSetzen(!an));
+  schalten("s-nav", an => { document.body.classList.toggle("nav-zu", !an); speichern("deck-nav", an ? "offen" : "zu"); });
+  schalten("s-glas", an => einstellungSetzen("glas", an));
+  schalten("s-bew", an => einstellungSetzen("bewegung", an));
+  schalten("s-ticker", an => einstellungSetzen("ticker", an));
+  for (const [id, schluessel, min, max, schritt] of [["t-takt", "takt", 2, 60, 1], ["t-schrift", "schrift", 80, 140, 5]]) {
+    const ausgabe = document.getElementById(id), einheit = id === "t-takt" ? " s" : " %";
+    ausgabe.parentElement.querySelectorAll("[data-schritt]").forEach(b => { b.onclick = () => {
+      const wert = Math.min(max, Math.max(min, einstellungen[schluessel] + Number(b.dataset.schritt) * schritt));
+      ausgabe.textContent = wert + einheit;
+      einstellungSetzen(schluessel, wert);
+    }; });
+  }
+  document.querySelectorAll(".farbpunkte button").forEach(b => { b.onclick = () => { akzentSetzen(b.dataset.akzent); document.querySelectorAll(".farbpunkte button").forEach(o => o.classList.toggle("aktiv", o === b)); }; });
+}
+async function kontoSeite() {
+  kopf("Konto", "Passwort & Zwei-Faktor", LADEN);
+  const k = await api("/api/account");
+  const feld = (id, label, typ, extra) => `<label class="feld">${label}<input id="${id}" type="${typ}" ${extra}></label>`;
+  const code = id => feld(id, "Code aus der Authenticator-App", "text", 'inputmode="numeric" autocomplete="one-time-code" maxlength="6" required');
+  const zwei = k.totp
+    ? `<p class="kontext">Zwei-Faktor ist <b class="dienst-ok">aktiv</b>. Zum Abschalten brauchst du Passwort und Code.</p><form id="aus" class="formular">${feld("aus-pw", "Passwort", "password", 'autocomplete="current-password" required')}${code("aus-code")}` +
+      `<button class="tab" type="submit">Zwei-Faktor abschalten</button><p class="kontext" id="aus-meldung"></p></form>`
+    : `<p class="kontext">Zwei-Faktor ist <b>aus</b>. Mit einer Authenticator-App (z. B. Aegis, Google Authenticator) wird zum Passwort ein 6-stelliger Code verlangt.</p><div id="einrichten"><button class="tab" id="begin" type="button">Einrichten</button></div>`;
+  document.getElementById("seite").innerHTML = `<div class="raster zwei">` + darstellungKarte() +
+    karte("Passwort ändern", `<form id="pw" class="formular">${feld("pw-alt", "Aktuelles Passwort", "password", 'autocomplete="current-password" required')}` +
+      `${feld("pw-neu", `Neues Passwort (mindestens ${k.min_password} Zeichen)`, "password", `autocomplete="new-password" minlength="${k.min_password}" required`)}${feld("pw-neu2", "Neues Passwort wiederholen", "password", 'autocomplete="new-password" required')}` +
+      `${k.totp ? code("pw-code") : ""}<button class="tab aktiv" type="submit">Passwort setzen</button><p class="kontext" id="pw-meldung"></p></form>` +
+      `<p class="kontext">${k.custom_password ? "Ein eigenes Passwort ist gesetzt." : "Es gilt noch das Start-Passwort aus der Server-Umgebung."} Beim Ändern werden alle anderen Sitzungen beendet.</p>`) +
+    karte("Zwei-Faktor-Anmeldung (TOTP)", zwei) + "</div>";
+  const meldung = (id, text, ok) => { const el = document.getElementById(id); el.textContent = text; el.style.color = ok ? "var(--ok)" : "var(--leer)"; };
+  darstellungVerdrahten();
+  document.getElementById("pw").onsubmit = async e => {
+    e.preventDefault();
+    if (document.getElementById("pw-neu").value !== document.getElementById("pw-neu2").value) return meldung("pw-meldung", "Die neuen Passwörter sind verschieden.", false);
+    const antwort = await postJson("/api/account/password", { current: document.getElementById("pw-alt").value, new: document.getElementById("pw-neu").value, code: k.totp ? document.getElementById("pw-code").value : "" });
+    if (antwort.ok) { toast("Passwort geändert"); kontoSeite(); } else meldung("pw-meldung", antwort.error, false);
+  };
+  if (k.totp) {
+    document.getElementById("aus").onsubmit = async e => {
+      e.preventDefault();
+      const antwort = await postJson("/api/account/totp/disable", { password: document.getElementById("aus-pw").value, code: document.getElementById("aus-code").value });
+      if (antwort.ok) { toast("Zwei-Faktor abgeschaltet"); kontoSeite(); } else meldung("aus-meldung", antwort.error, false);
+    };
+  } else {
+    document.getElementById("begin").onclick = async () => {
+      const g = await postJson("/api/account/totp/begin", {});
+      document.getElementById("einrichten").innerHTML = `<p class="kontext">Scanne den Code mit deiner Authenticator-App (z. B. Passwörter auf dem iPhone, Aegis, Google Authenticator). Er wird nur in deinem Browser erzeugt.</p><div class="qr">${qrSvg(g.uri)}</div><p class="kontext">Geht das Scannen nicht, gib in der App „Schlüssel manuell eingeben“, Typ zeitbasiert, Name „Claude Deck“ ein:</p><p class="mono" style="overflow-wrap:anywhere;user-select:all">${esc(g.secret)}</p>` +
+        `<p class="kontext">Oder als Adresse: <span class="mono" style="overflow-wrap:anywhere;user-select:all">${esc(g.uri)}</span></p><form id="an" class="formular">${code("an-code")}<button class="tab aktiv" type="submit">Bestätigen und aktivieren</button><p class="kontext" id="an-meldung"></p></form>`;
+      document.getElementById("an").onsubmit = async e => {
+        e.preventDefault();
+        const antwort = await postJson("/api/account/totp/enable", { code: document.getElementById("an-code").value });
+        if (antwort.ok) { toast("Zwei-Faktor aktiviert"); kontoSeite(); } else meldung("an-meldung", antwort.error, false);
+      };
+    };
+  }
+}
+async function sucheSeite() {
+  const q = decodeURIComponent(location.hash.slice(7));
+  kopf("Suche", `„${q}"`, '<p class="leise">Suche läuft …</p>');
+  let d;
+  try { d = await api("/api/search?q=" + encodeURIComponent(q)); } catch { return; }
+  document.getElementById("seite").innerHTML = `<div class="raster zwei">` +
+    karte(`${d.sessions.length} Treffer in Verläufen`, d.sessions.length ? `<table>${d.sessions.map(r => `<tr class="klick" onclick="location.hash='chat/${esc(r.id)}'" data-session="${esc(r.id)}"><td><b>${esc(r.title || r.id.slice(0, 8))}</b>` +
+      `<br><span class="leise">${esc(r.snippet)}</span></td></tr>`).join("")}</table>` : leer("Keine Treffer", "Versuche einen kürzeren oder anderen Begriff.")) +
+    karte(`${d.vault.length} Treffer im Vault-Graph`, d.vault.length ? `<table>${d.vault.map(n => `<tr><td><b>${esc(n.label)}</b> <span class="leise">· ${esc(n.community || "")}</span>` +
+      `<br><span class="leise mono">${esc(n.file || "")}</span><br><span class="leise">${n.neighbors.map(([rel, l]) => `${esc(rel)} → ${esc(l)}`).join(" · ")}</span></td></tr>`).join("")}</table>` : leer("Keine Treffer", "Versuche einen kürzeren oder anderen Begriff.")) + "</div>";
+}
+
+let daten, letzteSeite = "";
+function zeige() {
+  clearInterval(chatTimer);
+  const seiteElement = document.getElementById("seite");
+  if (letzteSeite !== location.hash) {
+    letzteSeite = location.hash;
+    seiteElement.classList.remove("erscheinen");
+    void seiteElement.offsetWidth;
+    seiteElement.classList.add("erscheinen");
+  }
+  if (location.hash.startsWith("#chat/")) {
+    document.getElementById("kopfzeile").innerHTML = '<a href="#sessions/uebersicht">Sessions</a> › Chat';
+    document.getElementById("titel").textContent = "Lade …";
+    document.querySelectorAll(".menuelink, [data-gruppe]").forEach(a => a.classList.remove("aktiv"));
+    chatSeite(location.hash.slice(6));
+    return;
+  }
+  if (location.hash === "#system" || location.hash === "#konto" || location.hash.startsWith("#suche/")) {
+    document.querySelectorAll("[data-gruppe]").forEach(a => a.classList.remove("aktiv"));
+    document.querySelectorAll(".menuelink").forEach(a => a.classList.toggle("aktiv", a.getAttribute("href") === location.hash));
+    (location.hash === "#system" ? systemSeite : location.hash === "#konto" ? kontoSeite : sucheSeite)();
+    return;
+  }
+  const route = SEITEN[location.hash.slice(1)] ? location.hash.slice(1) : "sessions/uebersicht";
+  const [zeile, titel, bauen, url] = SEITEN[route];
+  const gruppe = GRUPPEN[route.split("/")[0]];
+  document.getElementById("kopfzeile").innerHTML = `<a href="${gruppe[1]}">${gruppe[0]}</a> › ${esc(titel)}`;
+  document.getElementById("titel").textContent = titel;
+  document.getElementById("seite").innerHTML = daten && !url ? bauen(daten) : LADEN;
+  if (url) (Array.isArray(url) ? Promise.all(url.map(api)) : api(url)).then(x => { if (location.hash.slice(1) === route) document.getElementById("seite").innerHTML = bauen({ ...daten, x }); });
+  document.querySelectorAll(".menuelink").forEach(a => a.classList.toggle("aktiv", a.getAttribute("href") === "#" + route));
+  document.querySelectorAll("[data-gruppe]").forEach(t => t.classList.toggle("aktiv", t.dataset.gruppe === route.split("/")[0]));
+  const aktiverLink = document.querySelector(".menuelink.aktiv"), aktiveGruppe = aktiverLink && aktiverLink.closest("details");
+  document.querySelectorAll(".seitenleiste details").forEach(d => { d.open = d === aktiveGruppe; });
+  if (document.body.classList.contains("nav-offen")) drawerZiel(false);
+  document.querySelectorAll(".dropdown").forEach(d => d.removeAttribute("open"));
+}
+window.addEventListener("hashchange", zeige);
+zeige();
+Promise.all(["/api/sessions", "/api/vault", "/api/live", "/api/usage", "/api/config", "/api/costs", "/api/usage-history", "/api/backups", "/api/pins"].map(api))
+  .then(([s, v, live, usage, c, k, h, b, p]) => { daten = { s, v, live, usage, c, k, h, b, p }; titelAktualisieren(); tickerZeigen(); zeige(); });
+
+// Zaehler laufen beim ersten Anzeigen einer Seite hoch, Tabellenzellen bekommen Beschriftungen fuer schmale Bildschirme
+let animiert = "";
+function zaehlen() {
+  const ziele = [...document.querySelectorAll("[data-ziel]")];
+  if (!ziele.length || animiert === location.hash || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  animiert = location.hash;
+  ziele.forEach(el => {
+    const ziel = Number(el.dataset.ziel), start = performance.now();
+    el.textContent = "0";
+    const schritt = jetzt => {
+      const f = Math.min(1, (jetzt - start) / 600);
+      el.textContent = Math.round(ziel * (1 - Math.pow(1 - f, 3)));
+      if (f < 1) requestAnimationFrame(schritt);
+    };
+    requestAnimationFrame(schritt);
+  });
+}
+function labelTabellen() {
+  document.querySelectorAll("tr.klick").forEach(tr => { tr.tabIndex = 0; tr.setAttribute("role", "link"); });
+  document.querySelectorAll("#seite table").forEach(tab => {
+    const kopf = [...tab.querySelectorAll("thead th")].map(th => th.textContent.trim());
+    tab.querySelectorAll("tbody tr").forEach(tr => [...tr.children].forEach((td, i) => { td.dataset.label = kopf[i] || ""; }));
+  });
+}
+new MutationObserver(() => { labelTabellen(); zaehlen(); }).observe(document.getElementById("seite"), { childList: true });
+
+// Nur ein Dropdown-Menue gleichzeitig offen
+const dropdowns = document.querySelectorAll(".dropdown");
+dropdowns.forEach(d => d.addEventListener("toggle", () => {
+  if (d.open) dropdowns.forEach(andere => { if (andere !== d) andere.removeAttribute("open"); });
+}));
+
+// Seitenleiste, Akzentfarbe, Hoehe der Kopfleiste
+const schmal = matchMedia("(max-width: 900px)");
+function speichern(schluessel, wert) { try { localStorage.setItem(schluessel, wert); } catch (e) { console.warn("Nicht gespeichert:", e); } }
+function lesen(schluessel) { try { return localStorage.getItem(schluessel); } catch (e) { console.warn("Nicht lesbar:", e); return null; } }
+if (lesen("deck-nav") === "zu") document.body.classList.add("nav-zu");
+// Klick auf die Marke: immer zur Uebersicht (auch wenn man schon dort ist: neu laden und nach oben)
+document.getElementById("marke").addEventListener("click", e => {
+  e.preventDefault();
+  if (document.body.classList.contains("nav-offen")) drawerZiel(false);
+  if (location.hash === "#sessions/uebersicht" || location.hash === "") { zeige(); scrollTo({ top: 0, behavior: "smooth" }); }
+  else { location.hash = "sessions/uebersicht"; scrollTo(0, 0); }
+});
+document.getElementById("burger").onclick = () => {
+  if (schmal.matches) drawerZiel(!document.body.classList.contains("nav-offen"));
+  else speichern("deck-nav", document.body.classList.toggle("nav-zu") ? "zu" : "offen");
+};
+// Unterkante der Kopfleiste messen (nicht aus dem CSS-Wert rechnen: iOS gibt env() in getComputedStyle nicht als Zahl zurueck, dann verdeckte die Leiste die Seitenleiste)
+const navhoehe = () => document.documentElement.style.setProperty("--navh", Math.round(document.querySelector(".topnav").getBoundingClientRect().bottom + 10) + "px");
+navhoehe();
+["resize", "orientationchange", "load", "pageshow"].forEach(ereignis => addEventListener(ereignis, navhoehe));
+if (window.visualViewport) visualViewport.addEventListener("resize", navhoehe);
+if (window.ResizeObserver) new ResizeObserver(navhoehe).observe(document.querySelector(".topnav"));
+function akzentSetzen(name) {
+  document.documentElement.dataset.akzent = name;
+  document.querySelectorAll("#akzente button").forEach(b => b.classList.toggle("aktiv", b.dataset.akzent === name));
+  speichern("deck-akzent", name);
+}
+document.querySelectorAll("#akzente button").forEach(b => { b.onclick = () => akzentSetzen(b.dataset.akzent); });
+akzentSetzen(lesen("deck-akzent") || "blau");
+einstellungAnwenden();
+
+// Grosser Titel wandert beim Scrollen in die Werkzeugleiste, Trennlinie erst beim Scrollen
+const titelElement = document.getElementById("titel"), werkzeugtitel = document.getElementById("werkzeugtitel");
+new MutationObserver(() => { werkzeugtitel.textContent = titelElement.textContent; }).observe(titelElement, { childList: true, characterData: true, subtree: true });
+new IntersectionObserver(([e]) => document.body.classList.toggle("titel-weg", !e.isIntersecting), { rootMargin: "-60px 0px 0px 0px" }).observe(titelElement);
+addEventListener("scroll", () => document.body.classList.toggle("gescrollt", scrollY > 4), { passive: true });
+
+// Liquid Glass: der Glanz folgt dem Zeiger
+addEventListener("pointermove", e => {
+  const el = e.target.closest && e.target.closest(".karte, .tab, .segment, .suche, .ticker > span, .palette");
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${e.clientX - r.left}px`);
+  el.style.setProperty("--my", `${e.clientY - r.top}px`);
+}, { passive: true });
+
+// Federn und Gesten wie bei Apple: Daempfung 1, Antwortzeit in Sekunden, Geschwindigkeit der Hand wird uebernommen
+function feder({ von, nach, geschwindigkeit = 0, antwort = .35, daempfung = 1, bei, fertig }) {
+  const k = (2 * Math.PI / antwort) ** 2, c = 4 * Math.PI * daempfung / antwort;
+  let x = von, v = geschwindigkeit, letzte = performance.now(), aktiv = true;
+  const schritt = jetzt => {
+    if (!aktiv) return;
+    const dt = Math.min(.032, (jetzt - letzte) / 1000);
+    letzte = jetzt;
+    v += (-k * (x - nach) - c * v) * dt;
+    x += v * dt;
+    if (Math.abs(x - nach) < .5 && Math.abs(v) < 8) { bei(nach); if (fertig) fertig(); return; }
+    bei(x);
+    requestAnimationFrame(schritt);
+  };
+  requestAnimationFrame(schritt);
+  return () => { aktiv = false; };
+}
+const projektion = (v, rate = .998) => (v / 1000) * rate / (1 - rate);  // wohin die Bewegung auslaufen wuerde
+const gummiband = (ueber, mass, c = .55) => (ueber * mass * c) / (mass + c * Math.abs(ueber));  // Widerstand am Rand
+const geschwindigkeitAus = proben => {
+  const [t0, p0] = proben[0], [t1, p1] = proben[proben.length - 1];
+  return t1 > t0 ? (p1 - p0) / (t1 - t0) * 1000 : 0;
+};
+let klickSperre = 0;
+document.addEventListener("click", e => { if (performance.now() - klickSperre < 350) { e.stopPropagation(); e.preventDefault(); } }, true);
+
+// Seitenleiste auf dem Handy: ziehen, schliessen per Wisch, Rand-Wisch zum Oeffnen
+const seitenleiste = document.querySelector(".seitenleiste"), scrim = document.getElementById("scrim"), kante = document.getElementById("kante"), BREITE = 280;
+let drawerStopp = () => {}, drawerX = null, wischen = null;
+const drawerZeichnen = x => {
+  drawerX = x;
+  seitenleiste.style.transform = `translateX(${x}px)`;
+  scrim.style.opacity = String(Math.max(0, Math.min(1, 1 + x / BREITE)));
+  scrim.style.pointerEvents = x > -BREITE ? "auto" : "none";
+};
+function drawerZiel(offen, geschwindigkeit = 0) {
+  navhoehe();
+  drawerStopp();
+  document.body.classList.add("zieht");
+  drawerStopp = feder({ von: drawerX ?? (document.body.classList.contains("nav-offen") ? 0 : -BREITE), nach: offen ? 0 : -BREITE, geschwindigkeit, bei: drawerZeichnen, fertig: () => {
+    seitenleiste.style.transform = ""; scrim.style.opacity = ""; scrim.style.pointerEvents = ""; drawerX = null;
+    document.body.classList.toggle("nav-offen", offen);
+    document.body.classList.remove("zieht");
+  } });
+}
+function wischStart(e, startX) { wischen = { id: e.pointerId, x0: e.clientX, y0: e.clientY, start: startX, aktiv: false, proben: [[e.timeStamp, e.clientX]] }; }
+seitenleiste.addEventListener("pointerdown", e => { if (schmal.matches && document.body.classList.contains("nav-offen")) wischStart(e, 0); });
+kante.addEventListener("pointerdown", e => { if (schmal.matches) wischStart(e, -BREITE); });
+scrim.addEventListener("click", () => drawerZiel(false));
+addEventListener("pointermove", e => {
+  const w = wischen;
+  if (!w || e.pointerId !== w.id) return;
+  const dx = e.clientX - w.x0, dy = e.clientY - w.y0;
+  if (!w.aktiv) {
+    if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
+    if (Math.abs(dy) > Math.abs(dx)) { wischen = null; return; }  // senkrecht heisst Scrollen
+    w.aktiv = true;
+    drawerStopp();
+    document.body.classList.add("zieht");
+    if (e.target.setPointerCapture) e.target.setPointerCapture(e.pointerId);
+  }
+  const x = w.start + dx;
+  w.proben.push([e.timeStamp, e.clientX]);
+  if (w.proben.length > 6) w.proben.shift();
+  drawerZeichnen(x > 0 ? gummiband(x, BREITE) : Math.max(x, -BREITE));
+});
+const wischEnde = e => {
+  const w = wischen;
+  if (!w || e.pointerId !== w.id) return;
+  wischen = null;
+  if (!w.aktiv) return;
+  klickSperre = performance.now();
+  const v = geschwindigkeitAus(w.proben);
+  drawerZiel(drawerX + projektion(v) > -BREITE / 2, v);
+};
+addEventListener("pointerup", wischEnde);
+addEventListener("pointercancel", wischEnde);
+schmal.addEventListener("change", () => { drawerStopp(); drawerX = null; seitenleiste.style.transform = ""; scrim.style.opacity = ""; document.body.classList.remove("nav-offen", "zieht"); });
+
+// Palette als Sheet: am Griff nach unten ziehen schliesst sie
+function palettenGeste(palette, griff, schliessen) {
+  let g = null, y = 0, stopp = () => {};
+  const zeichnen = wert => { y = wert; palette.style.transform = `translateY(${wert}px)`; palette.style.opacity = String(Math.max(0, 1 - Math.max(0, wert) / 400)); };
+  griff.addEventListener("pointerdown", e => { stopp(); g = { id: e.pointerId, y0: e.clientY - y, proben: [[e.timeStamp, e.clientY]] }; griff.setPointerCapture(e.pointerId); });
+  griff.addEventListener("pointermove", e => {
+    if (!g || e.pointerId !== g.id) return;
+    const wert = e.clientY - g.y0;
+    g.proben.push([e.timeStamp, e.clientY]);
+    if (g.proben.length > 6) g.proben.shift();
+    zeichnen(wert < 0 ? -gummiband(-wert, 300) : wert);
+  });
+  const ende = e => {
+    if (!g || e.pointerId !== g.id) return;
+    const v = geschwindigkeitAus(g.proben);
+    g = null;
+    const schliesst = y + projektion(v) > 140;
+    stopp = feder({ von: y, nach: schliesst ? 420 : 0, geschwindigkeit: v, bei: zeichnen, fertig: schliesst ? schliessen : undefined });
+  };
+  griff.addEventListener("pointerup", ende);
+  griff.addEventListener("pointercancel", ende);
+}
+
+// Kontextmenue: Rechtsklick oder langes Druecken auf eine Session
+function menueSchliessen() { document.querySelectorAll(".kontextmenue").forEach(m => m.remove()); }
+function menueOeffnen(x, y, id) {
+  menueSchliessen();
+  const pin = (daten && daten.p && daten.p[id]) || { pinned: false, note: "" };
+  const eintraege = [
+    ["Öffnen", () => { location.hash = "chat/" + id; }],
+    [pin.pinned ? "Markierung entfernen" : "Markieren", async () => { await pinSetzen(id, !pin.pinned, pin.note || ""); if (!location.hash.startsWith("#chat/")) zeige(); }],
+    ["Befehl zum Fortsetzen kopieren", () => kopieren(`claude --resume ${id}`, "Befehl kopiert")],
+  ];
+  const menue = document.createElement("div");
+  menue.className = "kontextmenue";
+  menue.setAttribute("role", "menu");
+  menue.innerHTML = eintraege.map(([text], i) => `<button type="button" role="menuitem" data-i="${i}">${esc(text)}</button>`).join("");
+  document.body.appendChild(menue);
+  menue.style.left = Math.max(8, Math.min(x, innerWidth - menue.offsetWidth - 8)) + "px";
+  menue.style.top = Math.max(8, Math.min(y, innerHeight - menue.offsetHeight - 8)) + "px";
+  menue.onclick = e => { const b = e.target.closest("button"); if (b) { menueSchliessen(); eintraege[b.dataset.i][1](); } };
+  menue.querySelector("button").focus();
+}
+document.addEventListener("contextmenu", e => {
+  const zeile = e.target.closest("[data-session]");
+  if (!zeile) return;
+  e.preventDefault();
+  const r = zeile.getBoundingClientRect();
+  menueOeffnen(e.clientX || r.left + 20, e.clientY || r.top + 20, zeile.dataset.session);
+});
+let druck = null;
+document.addEventListener("pointerdown", e => {
+  if (!e.target.closest(".kontextmenue")) menueSchliessen();
+  const zeile = e.pointerType === "mouse" ? null : e.target.closest("[data-session]");
+  if (!zeile) return;
+  druck = { x: e.clientX, y: e.clientY, timer: setTimeout(() => { klickSperre = performance.now() + 800; menueOeffnen(e.clientX, e.clientY, zeile.dataset.session); druck = null; }, 500) };
+});
+const druckAbbrechen = () => { if (druck) { clearTimeout(druck.timer); druck = null; } };
+document.addEventListener("pointerup", druckAbbrechen);
+document.addEventListener("pointercancel", druckAbbrechen);
+document.addEventListener("pointermove", e => { if (druck && Math.hypot(e.clientX - druck.x, e.clientY - druck.y) > 8) druckAbbrechen(); });
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") menueSchliessen();
+  if (e.key === "Enter" && e.target.matches && e.target.matches("tr.klick")) e.target.click();
+});
+
+// Tooltips an Diagrammen: Zeiger oder Finger darueber, auch beim Wischen
+const tipp = document.createElement("div");
+tipp.className = "tipp";
+tipp.hidden = true;
+document.body.appendChild(tipp);
+function tippZeigen(e) {
+  const ziel = document.elementFromPoint(e.clientX, e.clientY), el = ziel && ziel.closest && ziel.closest("[data-tip]");
+  if (!el) { tipp.hidden = true; return; }
+  tipp.textContent = el.dataset.tip;
+  tipp.hidden = false;
+  tipp.style.left = Math.max(8, Math.min(e.clientX + 14, innerWidth - tipp.offsetWidth - 8)) + "px";
+  tipp.style.top = Math.max(8, e.clientY - 44) + "px";
+}
+document.addEventListener("pointermove", tippZeigen, { passive: true });
+document.addEventListener("pointerdown", tippZeigen);
+document.addEventListener("pointerup", e => { if (e.pointerType !== "mouse") setTimeout(() => { tipp.hidden = true; }, 1200); });
+
+// Befehlspalette (Strg+K)
+function paletteOeffnen() {
+  if (document.querySelector(".palette-hintergrund")) return;
+  const alle = [
+    ...Object.entries(SEITEN).map(([route, [zeile, titel]]) => ({ titel, hinweis: zeile, ziel: "#" + route })),
+    { titel: "System", hinweis: "VPS", ziel: "#system" }, { titel: "Konto", hinweis: "Passwort & Zwei-Faktor", ziel: "#konto" },
+    ...((daten && daten.s.sessions) || []).slice(0, 60).map(r => ({ titel: r.title || r.id.slice(0, 8), hinweis: "Session", ziel: "#chat/" + r.id })),
+    { titel: "Hell/Dunkel umschalten", hinweis: "Aktion", aktion: () => document.getElementById("theme").click() },
+  ];
+  const hintergrund = document.createElement("div");
+  hintergrund.className = "palette-hintergrund";
+  hintergrund.innerHTML = '<div class="palette"><div class="griff"></div><input placeholder="Seite, Session oder Suchbegriff …" autofocus><ul></ul></div>';
+  document.body.appendChild(hintergrund);
+  const eingabe = hintergrund.querySelector("input"), liste = hintergrund.querySelector("ul");
+  let treffer = [], auswahl = 0;
+  const zeichnen = () => {
+    const q = eingabe.value.trim().toLowerCase();
+    treffer = alle.filter(e => !q || `${e.titel} ${e.hinweis}`.toLowerCase().includes(q)).slice(0, 10);
+    if (q.length >= 2) treffer.push({ titel: `Suche nach „${eingabe.value.trim()}“`, hinweis: "Verläufe und Vault", ziel: "#suche/" + encodeURIComponent(eingabe.value.trim()) });
+    auswahl = Math.min(auswahl, treffer.length - 1);
+    liste.innerHTML = treffer.map((e, i) => `<li class="${i === auswahl ? "gewaehlt" : ""}" data-i="${i}"><span>${esc(e.titel)}</span><small>${esc(e.hinweis)}</small></li>`).join("") || '<li class="leise">Nichts gefunden.</li>';
+  };
+  const schliessen = () => hintergrund.remove();
+  palettenGeste(hintergrund.querySelector(".palette"), hintergrund.querySelector(".griff"), schliessen);
+  const ausfuehren = e => { schliessen(); if (e.aktion) e.aktion(); else location.hash = e.ziel; };
+  eingabe.oninput = () => { auswahl = 0; zeichnen(); };
+  eingabe.onkeydown = e => {
+    if (e.key === "Escape") schliessen();
+    else if (e.key === "ArrowDown" || e.key === "ArrowUp") { e.preventDefault(); auswahl = (auswahl + (e.key === "ArrowDown" ? 1 : -1) + treffer.length) % treffer.length; zeichnen(); }
+    else if (e.key === "Enter" && treffer[auswahl]) ausfuehren(treffer[auswahl]);
+  };
+  liste.onclick = e => { const li = e.target.closest("li[data-i]"); if (li) ausfuehren(treffer[li.dataset.i]); };
+  hintergrund.onclick = e => { if (e.target === hintergrund) schliessen(); };
+  zeichnen();
+}
+addEventListener("keydown", e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") { e.preventDefault(); paletteOeffnen(); }
+});
+
+// Farbschema und Tastenkuerzel
+const THEMA_KEY = "deck-thema";
+function themaSetzen(hell) {
+  document.documentElement.dataset.theme = hell ? "hell" : "dunkel";
+  document.getElementById("theme").textContent = hell ? "Dunkel" : "Hell";
+  try { localStorage.setItem(THEMA_KEY, hell ? "hell" : "dunkel"); } catch (e) { console.warn("Farbschema nicht gespeichert:", e); }
+}
+let gespeichert = null;
+try { gespeichert = localStorage.getItem(THEMA_KEY); } catch (e) { console.warn("Farbschema nicht lesbar:", e); }
+themaSetzen(gespeichert ? gespeichert === "hell" : !matchMedia("(prefers-color-scheme: dark)").matches);
+document.getElementById("theme").onclick = () => themaSetzen(document.documentElement.dataset.theme !== "hell");
+addEventListener("keydown", e => {
+  if (e.key === "/" && !/INPUT|TEXTAREA/.test(document.activeElement.tagName)) { e.preventDefault(); document.querySelector(".topnav input").focus(); }
+});
+</script>
+<script src="/features.js"></script>
+<script src="/control.js"></script>
+</body>
+</html>
