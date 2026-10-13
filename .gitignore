@@ -9,3 +9,4 @@ audit.jsonl
 usage-history.jsonl
 __pycache__/
 .impeccable/
+widgets.json

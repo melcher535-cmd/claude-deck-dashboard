@@ -25,6 +25,7 @@ from auth import MIN_PASSWORD_LENGTH, Auth
 from features import MONITOR_SECONDS, STREAM_SECONDS, Features
 from notes import with_mobile_layout
 from push import Push
+from widgets import WidgetLayout
 from insights import Pins, error_list, log_access, log_audit, read_access, usage_ranking, vault_health, vault_tree
 
 SESSIONS = os.path.expanduser("~/.claude/projects/*/*.jsonl")
@@ -414,6 +415,7 @@ CREDENTIALS = f"{HERE}/credentials.json"
 ACCESS_LOG = f"{HERE}/access-log.jsonl"
 AUDIT_LOG = f"{HERE}/audit.jsonl"
 PINS = Pins(f"{HERE}/pins.json")
+WIDGETS = WidgetLayout(f"{HERE}/widgets.json")
 SUMMARY_HOUR = 20
 SUMMARY_ZONE = "Europe/Berlin"
 UTC = datetime.timezone.utc
@@ -575,9 +577,9 @@ ROUTES = {"/api/sessions": sessions_data, "/api/vault": vault_data, "/api/live":
           "/api/costs": costs_data, "/api/config": config_data, "/api/system": system_data, "/api/usage-history": usage_history,
           "/api/services": services_data, "/api/backups": backups_data,
           "/api/ranking": ranking_data, "/api/errors": lambda: error_list(glob.glob(SESSIONS)), "/api/vault-health": lambda: vault_health(VAULT),
-          "/api/vault-tree": lambda: vault_tree(VAULT), "/api/pins": PINS.all, "/api/access": lambda: read_access(ACCESS_LOG), "/api/audit": lambda: read_access(AUDIT_LOG, 200), "/api/account": account_data}
+          "/api/vault-tree": lambda: vault_tree(VAULT), "/api/pins": PINS.all, "/api/widgets": WIDGETS.all, "/api/access": lambda: read_access(ACCESS_LOG), "/api/audit": lambda: read_access(AUDIT_LOG, 200), "/api/account": account_data}
 PAGES = {"/": f"{HERE}/index.html", "/graph.html": f"{VAULT}/graphify-out/graph.html", "/login": f"{HERE}/login.html"}
-SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
+SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js", "/widgets.js": f"{HERE}/widgets.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
 PUBLIC = {  # App-Symbol und Manifest brauchen keine Anmeldung: iOS holt sie beim "Zum Home-Bildschirm"
     "/manifest.webmanifest": (f"{HERE}/manifest.webmanifest", "application/manifest+json"),
     "/sw.js": (f"{HERE}/sw.js", "text/javascript"), "/i18n.js": (f"{HERE}/i18n.js", "text/javascript"), "/i18n-en.js": (f"{HERE}/i18n-en.js", "text/javascript"), "/icon-180.png": (f"{HERE}/icon-180.png", "image/png"),
@@ -776,6 +778,8 @@ class Handler(BaseHTTPRequestHandler):
             elif path.startswith("/api/pins/") and SESSION_ID.match(path[len("/api/pins/"):]):
                 PINS.set(path[len("/api/pins/"):], data.get("pinned"), text("note"))
                 status, payload = 200, {"ok": True}
+            elif path == "/api/widgets":
+                status, payload = 200, WIDGETS.save(data)
             else:
                 handled = features.post(path, data, ip, self.token())
                 status, payload = handled or (404, {"error": "unbekannt"})

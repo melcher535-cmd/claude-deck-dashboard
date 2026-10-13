@@ -31,6 +31,7 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 - Usage history with a forecast ("full in about N hours"), consumption share per session, error patterns
 - Chat view per session (messenger style, coloured diffs for edits), filters, Markdown export, session compare
 - Pin sessions with a note, copy `claude --resume <id>`
+- **Custom widgets** on the overview: Customize → *Widget hinzufügen*. Pick one of 23 sources (limits, costs, tokens, sessions, errors, health, certificate, disk, memory, CPU, services, repositories, mailbox, notes, backups ...), a look (number, ring, line, bars, list), a range and a width, with a live preview. Widgets and their order are stored on the server (`widgets.json`) and apply on every device
 
 **Notifications**
 - Warnings at 80 % and 95 % of a limit, a forecast warning, a message when a limit **resets** and when a watched session finishes
@@ -282,7 +283,7 @@ All of these hold private data, stay in the project folder and are listed in `.g
 | `push-keys.json`, `push-subs.json` | VAPID keys and device subscriptions |
 | `access-log.jsonl`, `audit.jsonl` | Login events, remote-control actions |
 | `usage-history.jsonl` | One data point every 5 minutes at most |
-| `pins.json`, `watch.json` | Pinned sessions, session alarms |
+| `pins.json`, `watch.json`, `widgets.json` | Pinned sessions, session alarms, overview layout and custom widgets |
 
 ## Notifications
 
@@ -353,6 +354,7 @@ Found a vulnerability? Please open a private security advisory on GitHub instead
 | `control.py`, `control.js` | Remote control with step-up and audit |
 | `storage.py` | Small JSON file helper |
 | `index.html`, `features.js`, `login.html` | The whole front end, no framework |
+| `widgets.py`, `widgets.js` | Overview layout storage and validation; custom widget sources, views and the builder dialog |
 | `i18n.js`, `i18n-en.js` | Language switch: runtime translation engine and the English dictionary |
 | `qrcode.js` | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 (MIT), draws the 2FA QR code in the browser |
 | `manifest.webmanifest`, `icon-*.png`, `favicon-*.png` | Home-screen app metadata and icons |
@@ -369,7 +371,7 @@ python3 - <<'EOF'
 import importlib, sys, traceback
 sys.path.insert(0, ".")
 failed = 0
-for name in ("test_server", "test_features", "test_viewer", "test_control"):
+for name in ("test_server", "test_features", "test_viewer", "test_control", "test_widgets"):
     module = importlib.import_module(name)
     for test in dir(module):
         if test.startswith("test_"):

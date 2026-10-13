@@ -434,6 +434,36 @@
   .widget-aus { display: none; }
   #seite.widgets-bearbeiten .widget-aus { display: block; opacity: .45; }
   #widgets-bearbeiten { margin: 0 0 12px; }
+  #widget-neu { display: none; margin: 0 0 12px 8px; }
+  #seite.widgets-bearbeiten #widget-neu { display: inline-flex; }
+  #widgets { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 16px; }
+  #widgets > .widget { grid-column: 1 / -1; min-width: 0; }
+  #widgets > .widget.halb { grid-column: auto; }
+  .widget-karte { margin-bottom: 16px; }
+  .widget-karte .ring { min-width: 0; }
+  .wliste .zeile { padding: 9px 0; gap: 12px; }
+  .wliste .zeile > div { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .wliste .zeile > span { flex: 0 1 60%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; }
+  .palette.sheet, body.kein-glas .palette.sheet { background: Canvas; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .palette.sheet::before { display: none; }
+  .wliste .zeile:last-child { border-bottom: 0; }
+  .zeile[hidden] { display: none; }
+  .kontextmenue { max-height: 62vh; overflow-y: auto; }
+  .w-hintergrund { padding-top: 6vh; overflow-y: auto; align-items: start; }
+  .palette.sheet { width: min(520px, 94vw); }
+  .sheet-kopf { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 14px 16px 8px; }
+  .sheet-kopf b { font-size: 1rem; font-weight: 600; letter-spacing: -.01em; }
+  .sheet-text { justify-self: start; padding: 4px 6px; border: 0; background: none; color: var(--blau); font: 1rem var(--schrift); cursor: pointer; transition: opacity .15s; }
+  .sheet-text.fett { justify-self: end; font-weight: 600; }
+  .sheet-text:active { opacity: .45; }
+  .w-vorschau { padding: 8px 16px 4px; }
+  .w-vorschau .karte { margin: 0; min-height: 110px; background: var(--fuellung); box-shadow: none; }
+  .sheet-felder { margin: 12px 16px 12px; padding: 0 16px; border-radius: 14px; background: var(--fuellung); }
+  .sheet-felder .zeile { padding: 11px 0; }
+  .sheet-felder .zeile:last-child { border-bottom: 0; }
+  .palette.sheet .sheet-felder input { width: min(240px, 58%); padding: 4px 0; border: 0; outline: none; background: none; color: var(--text); font: inherit; text-align: right; }
+  .palette.sheet .sheet-felder input::placeholder { color: var(--leise); }
+  @media (max-width: 700px) { #widgets > .widget.halb { grid-column: 1 / -1; } }
   .hilfe { max-width: 560px; }
   .terminal { margin: 0; min-height: 320px; max-height: 62vh; overflow: auto; padding: 12px; border-radius: 12px; background: #0c0e12; color: #d8e6ea; font: 12px/1.45 var(--mono); white-space: pre; }
   .bridge-zeile { cursor: pointer; border-radius: 10px; padding-inline: 10px; }
@@ -1364,5 +1394,6 @@ addEventListener("keydown", e => {
 </script>
 <script src="/features.js"></script>
 <script src="/control.js"></script>
+<script src="/widgets.js"></script>
 </body>
 </html>

@@ -346,8 +346,25 @@ function zuletztChips() {
   const liste = speicherLesen("deck-zuletzt", []).filter(r => SEITEN[r]);
   return liste.length ? `<div class="chips">${liste.map(r => `<a class="chip" href="#${r}">${esc(SEITEN[r][1])}</a>`).join("")}</div>` : "";
 }
-function widgetsAnwenden() {
+async function widgetLayoutLaden() {
+  const vorgabe = { order: [], hidden: [], custom: [] };
+  try {
+    let layout = await api("/api/widgets");
+    const alt = speicherLesen("deck-widgets", null);
+    if (alt && !layout.order.length && !layout.hidden.length && !layout.custom.length) {  // einmalig: bisherige Anordnung aus dem Browser auf den Server uebernehmen
+      layout = { order: alt.order || [], hidden: alt.hidden || [], custom: [] };
+      if ((await postJson("/api/widgets", layout)).ok) speicherSchreiben("deck-widgets", null);
+    }
+    return layout;
+  } catch (e) { console.warn("Widgets nicht ladbar:", e); return vorgabe; }
+}
+let widgetsLaden = false, widgetTimer = null;
+async function widgetsAnwenden() {
   const seite = document.getElementById("seite");
+  if (!document.getElementById("usage") || seite.querySelector(".widget") || widgetsLaden) return;
+  widgetsLaden = true;
+  const layout = await widgetLayoutLaden();
+  widgetsLaden = false;
   if (!document.getElementById("usage") || seite.querySelector(".widget")) return;
   const gruppen = { usage: [], live: [], markiert: [], heute: [], gesamt: [], diagramme: [] };
   let nachKopf = null;
@@ -366,23 +383,47 @@ function widgetsAnwenden() {
   alle.zuletzt.innerHTML = chips ? `<p class="kleinzeile">Zuletzt besucht</p>${chips}` : "";
   alle.hinweise = abschnitt("hinweise");
   gesundheitHinweis().then(html => { alle.hinweise.innerHTML = html; });
-  const einstellung = speicherLesen("deck-widgets", { order: [], hidden: [] }), ordnung = [...einstellung.order, ...Object.keys(WIDGET_NAMEN).filter(n => !einstellung.order.includes(n))];
+  for (const w of layout.custom) alle["eigen-" + w.id] = widgetBauen(w);
+  const ordnung = [...layout.order, ...Object.keys(alle).filter(n => !layout.order.includes(n))];
   const buehne = document.createElement("div"); buehne.id = "widgets";
   seite.prepend(buehne);
-  const speichern = () => speicherSchreiben("deck-widgets", { order: [...buehne.children].map(s => s.dataset.widget), hidden: [...buehne.children].filter(s => s.classList.contains("widget-aus")).map(s => s.dataset.widget) });
-  const steuer = s => { s.querySelector(".widget-steuer") || s.insertAdjacentHTML("afterbegin", `<div class="widget-steuer"><b>${WIDGET_NAMEN[s.dataset.widget]}</b><span><button type="button" data-a="hoch" aria-label="Nach oben">↑</button><button type="button" data-a="runter" aria-label="Nach unten">↓</button><button type="button" data-a="aus">${s.classList.contains("widget-aus") ? "Einblenden" : "Ausblenden"}</button></span></div>`); };
-  for (const name of ordnung) if (alle[name]) { buehne.appendChild(alle[name]); alle[name].classList.toggle("widget-aus", einstellung.hidden.includes(name)); steuer(alle[name]); }
+  const eigen = id => layout.custom.find(w => "eigen-" + w.id === id);
+  const speichern = async () => {
+    layout.order = [...buehne.children].map(s => s.dataset.widget);
+    layout.hidden = [...buehne.children].filter(s => s.classList.contains("widget-aus")).map(s => s.dataset.widget);
+    try { const antwort = await postJson("/api/widgets", layout); if (!antwort.ok) throw new Error(antwort.error); }
+    catch (e) { console.warn("Widgets nicht gespeichert:", e); toast("Widgets nicht gespeichert"); }
+  };
+  const steuer = s => {
+    s.querySelector(".widget-steuer") && s.querySelector(".widget-steuer").remove();
+    const id = s.dataset.widget, w = eigen(id), name = w ? w.title : WIDGET_NAMEN[id];
+    const eigene = w ? '<button type="button" data-a="bearbeiten">Bearbeiten</button><button type="button" data-a="loeschen">Löschen</button>' : "";
+    s.insertAdjacentHTML("afterbegin", `<div class="widget-steuer"><b>${esc(name)}</b><span>${eigene}<button type="button" data-a="hoch" aria-label="Nach oben">↑</button><button type="button" data-a="runter" aria-label="Nach unten">↓</button><button type="button" data-a="aus">${s.classList.contains("widget-aus") ? "Einblenden" : "Ausblenden"}</button></span></div>`);
+  };
+  for (const name of ordnung) if (alle[name]) { buehne.appendChild(alle[name]); alle[name].classList.toggle("widget-aus", layout.hidden.includes(name)); steuer(alle[name]); }
   const knopf = document.createElement("button"); knopf.className = "tab"; knopf.type = "button"; knopf.id = "widgets-bearbeiten"; knopf.textContent = "Anpassen";
-  buehne.before(knopf);
+  const neuKnopf = document.createElement("button"); neuKnopf.className = "tab"; neuKnopf.type = "button"; neuKnopf.id = "widget-neu"; neuKnopf.textContent = "Widget hinzufügen";
+  buehne.before(knopf, neuKnopf);
   knopf.onclick = () => { const an = seite.classList.toggle("widgets-bearbeiten"); knopf.textContent = an ? "Fertig" : "Anpassen"; knopf.classList.toggle("aktiv", an); };
+  neuKnopf.onclick = () => widgetDialog(widgetNeuerStart(), w => { layout.custom.push(w); const s = widgetBauen(w); buehne.appendChild(s); steuer(s); speichern(); });
   buehne.onclick = e => {
     const b = e.target.closest("[data-a]"); if (!b) return;
     const s = b.closest(".widget");
     if (b.dataset.a === "hoch" && s.previousElementSibling) s.previousElementSibling.before(s);
     if (b.dataset.a === "runter" && s.nextElementSibling) s.nextElementSibling.after(s);
     if (b.dataset.a === "aus") { s.classList.toggle("widget-aus"); b.textContent = s.classList.contains("widget-aus") ? "Einblenden" : "Ausblenden"; }
+    if (b.dataset.a === "bearbeiten") {
+      const alt = eigen(s.dataset.widget);
+      return widgetDialog(alt, neu => { layout.custom[layout.custom.indexOf(alt)] = neu; const ersatz = widgetBauen(neu); ersatz.classList.toggle("widget-aus", s.classList.contains("widget-aus")); s.replaceWith(ersatz); steuer(ersatz); speichern(); });
+    }
+    if (b.dataset.a === "loeschen") {
+      if (!confirm(`Widget „${eigen(s.dataset.widget).title}“ löschen?`)) return;
+      layout.custom = layout.custom.filter(w => "eigen-" + w.id !== s.dataset.widget); s.remove();
+    }
     speichern();
   };
+  clearInterval(widgetTimer);
+  widgetTimer = setInterval(() => { if (document.getElementById("widgets")) widgetsAktualisieren(layout.custom); else clearInterval(widgetTimer); }, WIDGET_TAKT_MS);
 }
 SEITEN_HAKEN["sessions/uebersicht"] = widgetsAnwenden;
 addEventListener("hashchange", () => {
