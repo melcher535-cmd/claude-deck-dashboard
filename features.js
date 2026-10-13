@@ -368,7 +368,7 @@ function widgetZiehen(buehne, speichern) {
     const kopf = e.target.closest(".widget-steuer");
     if (!kopf || e.target.closest("button") || !document.getElementById("seite").classList.contains("widgets-bearbeiten") || e.button > 0) return;
     const s = kopf.closest(".widget");
-    const start = { x: e.clientX, y: e.clientY, ziehen: false, versatz: null };
+    const start = { x: e.clientX, y: e.clientY, ziehen: false, versatz: null, sperre: null };
     const natuerlich = () => { s.style.transform = ""; return s.getBoundingClientRect(); };
     const bewegen = ev => {
       if (!start.ziehen) {
@@ -378,8 +378,11 @@ function widgetZiehen(buehne, speichern) {
         if (navigator.vibrate) navigator.vibrate(8);
       }
       const r = natuerlich();
-      const ziel = sichtbar().find(w => { if (w === s) return false; const b = w.getBoundingClientRect(); return ev.clientX > b.left && ev.clientX < b.right && ev.clientY > b.top && ev.clientY < b.bottom; });
+      const unterZeiger = w => { const b = w.getBoundingClientRect(); return ev.clientX > b.left && ev.clientX < b.right && ev.clientY > b.top && ev.clientY < b.bottom; };
+      if (start.sperre && !unterZeiger(start.sperre)) start.sperre = null;  // ein getauschtes Widget bleibt gesperrt, bis der Zeiger es verlassen hat: sonst wird es sofort zurueckgetauscht (Hin-und-her-Springen)
+      const ziel = sichtbar().find(w => w !== s && w !== start.sperre && unterZeiger(w));
       if (ziel) {
+        start.sperre = ziel;
         const alle = sichtbar(), vorher = new Map(alle.filter(w => w !== s).map(w => [w, w.getBoundingClientRect()]));
         alle.indexOf(ziel) < alle.indexOf(s) ? ziel.before(s) : ziel.after(s);
         if (!ruhig()) for (const [w, alt] of vorher) {
@@ -389,8 +392,8 @@ function widgetZiehen(buehne, speichern) {
       }
       const slot = natuerlich();
       s.style.transform = `translate(${ev.clientX - start.versatz.x - slot.left}px, ${ev.clientY - start.versatz.y - slot.top}px)`;
-      const rand = 80;
-      if (ev.clientY < rand) scrollBy(0, -14); else if (ev.clientY > innerHeight - rand) scrollBy(0, 14);
+      const rand = 60;
+      if (ev.clientY < rand) scrollBy(0, -8); else if (ev.clientY > innerHeight - rand) scrollBy(0, 8);
     };
     const ende = ev => {
       removeEventListener("pointermove", bewegen); removeEventListener("pointerup", ende); removeEventListener("pointercancel", ende);
