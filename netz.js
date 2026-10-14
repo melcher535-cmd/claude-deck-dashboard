@@ -17,7 +17,7 @@ netzStil.textContent = `
   .neinheit { margin-left: 4px; font-size: .5em; font-weight: 500; color: var(--leise); } td.nstatus { white-space: nowrap; }
   .nzeile { margin: 0 0 14px; } .nzeile:last-child { margin-bottom: 0; }
   .nkopf { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 6px; } .nkopf b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nspur { height: 8px; overflow: hidden; border-radius: 4px; background: var(--fuellung); } .nfuell { height: 100%; border-radius: 4px; transition: width .4s; }
+  .nspur { height: 8px; overflow: hidden; border-radius: 4px; background: var(--fuellung); } .nfuell { width: 100%; height: 100%; transform-origin: left; transition: transform .4s var(--feder); }
   .npunkt { display: inline-block; width: 9px; height: 9px; margin-right: 8px; border-radius: 50%; background: var(--fuellung2); } .npunkt.an { background: var(--ok); }
   .nmodus { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 10px; margin-bottom: 14px; }
   .nmodus button { padding: 14px; border: 2px solid transparent; border-radius: 14px; background: var(--fuellung); color: var(--text); font: inherit; text-align: left; cursor: pointer; }
@@ -68,7 +68,7 @@ function netzPrognose(n, q, volume) {
 }
 function netzBalken(name, belegt, gesamt, prozent, zusatz = "") {
   return `<div class="nzeile"><div class="nkopf"><b>${netzTn(name)}</b><span class="leise">${netzSpeicherText(belegt)} von ${netzSpeicherText(gesamt)} · ${prozent} %</span></div>` +
-    `<div class="nspur"><div class="nfuell" style="width:${Math.min(100, prozent)}%;background:${netzFarbe(prozent)}"></div></div>${zusatz ? `<small class="leise">${esc(zusatz)}</small>` : ""}</div>`;
+    `<div class="nspur"><div class="nfuell" style="transform:scaleX(${Math.min(100, prozent) / 100});background:${netzFarbe(prozent)}"></div></div>${zusatz ? `<small class="leise">${esc(zusatz)}</small>` : ""}</div>`;
 }
 const netzFehlerKarte = q => karte(netzTn(q.name), `<p class="dienst-aus">antwortet nicht</p><p class="leise">${netzTn(q.fehler || "")}</p>`);
 function netzLeer(n) {
