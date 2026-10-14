@@ -217,7 +217,8 @@ def truenas(src, state):
 
 # --- Fritz!Box (TR-064) und UPnP --------------------------------------------------------
 TR064_VERBINDUNG = (("/upnp/control/wanipconnection1", "urn:dslforum-org:service:WANIPConnection:1"), ("/upnp/control/wanpppconn1", "urn:dslforum-org:service:WANPPPConnection:1"))
-FRITZ_IF = ("/upnp/control/wancommonifconfig1", "urn:dslforum-org:service:WANCommonInterfaceConfig:1")
+FRITZ_IF = (("/upnp/control/wancommonifconfig1", "urn:dslforum-org:service:WANCommonInterfaceConfig:1"),
+            ("/igdupnp/control/WANCommonIFC1", "urn:schemas-upnp-org:service:WANCommonInterfaceConfig:1"))  # zweiter Weg: UPnP-Schnittstelle, bei manchen Modellen der einzige
 FRITZ_HOSTS = ("/upnp/control/hosts", "urn:dslforum-org:service:Hosts:1")
 FRITZ_INFO = ("/upnp/control/deviceinfo", "urn:dslforum-org:service:DeviceInfo:1")
 
@@ -229,7 +230,8 @@ def soap(b, pfad, dienst, aktion, argumente="", opener=None):
     if status == 401:
         raise NetzFehler("Fritz!Box verlangt eine Anmeldung: Benutzer und Passwort eintragen" if opener is None else "Fritz!Box lehnt Benutzer oder Passwort ab")
     if status >= 400:
-        raise NetzFehler(f"{aktion}: HTTP {status}")
+        grund = re.search(rb"<errorDescription>([^<]{1,80})</errorDescription>", body)
+        raise NetzFehler(f"{aktion}: HTTP {status}" + (f" ({grund.group(1).decode('utf-8', 'replace')})" if grund else ""))
     return {el.tag.rsplit("}", 1)[-1]: (el.text or "") for el in ET.fromstring(body).iter() if el.tag.rsplit("}", 1)[-1].startswith("New")}
 
 
@@ -263,11 +265,23 @@ def fritzbox(src, state):
             fehler = fehler or e  # den ersten Fehler zeigen (z. B. fehlende Anmeldung), nicht den des zweiten Versuchs
     if verbindung is None:
         raise fehler
-    zaehler, link = soap(b, *FRITZ_IF, "GetAddonInfos", opener=opener), soap(b, *FRITZ_IF, "GetCommonLinkProperties", opener=opener)
+    daten = {"hinweise": []}
+    zaehler, link, fehler = {}, {}, None
+    for pfad, dienst in FRITZ_IF:
+        try:
+            zaehler, link = soap(b, pfad, dienst, "GetAddonInfos", opener=opener), soap(b, pfad, dienst, "GetCommonLinkProperties", opener=opener)
+            break
+        except NetzFehler as e:
+            fehler = fehler or e
+    else:
+        daten["hinweise"].append(f"Datenrate nicht abrufbar: {fehler}")
     wan = {"verbunden": verbindung[0].get("NewConnectionStatus") == "Connected", "ip": verbindung[1].get("NewExternalIPAddress", ""),
-           "rx": int(zaehler.get("NewByteReceiveRate") or 0), "tx": int(zaehler.get("NewByteSendRate") or 0),
            "down_max": int(link.get("NewLayer1DownstreamMaxBitRate") or 0), "up_max": int(link.get("NewLayer1UpstreamMaxBitRate") or 0)}
-    daten = {"wan": wan, "hinweise": []}
+    if "NewByteReceiveRate" in zaehler:
+        wan.update({"rx": int(zaehler["NewByteReceiveRate"] or 0), "tx": int(zaehler.get("NewByteSendRate") or 0)})
+    elif "NewTotalBytesReceived" in zaehler:  # nur Zaehlerstaende: Rate aus zwei Abfragen
+        wan.update(counter_rate(state, "fritz", time.time(), int(zaehler["NewTotalBytesReceived"]), int(zaehler.get("NewTotalBytesSent") or 0), 1 << 32) or {})
+    daten["wan"] = wan
     if opener:
         try:
             info = soap(b, *FRITZ_INFO, "GetInfo", opener=opener)

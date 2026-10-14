@@ -812,11 +812,11 @@ def test_runaway_ssh_output_and_hanging_commands_are_cut_off():
 class FakeFritz:
     """Fritz!Box-Attrappe: alle SOAP-Aufrufe verlangen Digest-Anmeldung (Benutzer u, Passwort p), wie neuere FRITZ!OS-Versionen."""
 
-    def __init__(self):
+    def __init__(self, kaputt=()):
         import hashlib
         import re
         fake = self
-        self.log = []
+        self.log, self.kaputt = [], kaputt
 
         antworten = {"GetStatusInfo": "<NewConnectionStatus>Connected</NewConnectionStatus>", "GetExternalIPAddress": "<NewExternalIPAddress>84.1.2.3</NewExternalIPAddress>",
                      "GetAddonInfos": "<NewByteSendRate>1000</NewByteSendRate><NewByteReceiveRate>5000</NewByteReceiveRate>",
@@ -829,7 +829,14 @@ class FakeFritz:
                 self.rfile.read(int(self.headers.get("Content-Length") or 0))
                 aktion = self.headers["SOAPACTION"].strip('"').split("#")[1]
                 kopf = self.headers.get("Authorization", "")
-                fake.log.append((aktion, bool(kopf)))
+                fake.log.append((aktion, bool(kopf), self.path))
+                if self.path in fake.kaputt:
+                    fehler = b"<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\"><s:Body><s:Fault><detail><UPnPError><errorCode>401</errorCode><errorDescription>Invalid Action</errorDescription></UPnPError></detail></s:Fault></s:Body></s:Envelope>"
+                    self.send_response(500)
+                    self.send_header("Content-Length", str(len(fehler)))
+                    self.end_headers()
+                    self.wfile.write(fehler)
+                    return
                 if not self.digest_ok(kopf):
                     self.send_response(401)
                     self.send_header("WWW-Authenticate", 'Digest realm="F!Box", nonce="abc123", qop="auth", algorithm=MD5')
@@ -876,5 +883,23 @@ def test_fritzbox_says_what_is_missing_when_the_login_is_absent_or_wrong():
     try:
         assert "Anmeldung" in abfragen(src("fritzbox", port=box.port), {})["fehler"]
         assert "lehnt" in abfragen(src("fritzbox", port=box.port, benutzer="u", passwort="falsch"), {})["fehler"]
+    finally:
+        box.close()
+
+
+def test_fritzbox_falls_back_to_the_upnp_interface_when_the_rate_call_fails_with_500():
+    box = FakeFritz(kaputt=("/upnp/control/wancommonifconfig1",))
+    try:
+        r = ok(abfragen(src("fritzbox", port=box.port, benutzer="u", passwort="p"), {}))
+        assert r["wan"]["rx"] == 5000 and r["hinweise"] == [] and any(p == "/igdupnp/control/WANCommonIFC1" for _, _, p in box.log)
+    finally:
+        box.close()
+
+
+def test_fritzbox_still_reports_connection_when_no_rate_is_available_and_names_the_reason():
+    box = FakeFritz(kaputt=("/upnp/control/wancommonifconfig1", "/igdupnp/control/WANCommonIFC1"))
+    try:
+        r = ok(abfragen(src("fritzbox", port=box.port, benutzer="u", passwort="p"), {}))
+        assert r["wan"]["verbunden"] and "rx" not in r["wan"] and "Invalid Action" in r["hinweise"][0] and "HTTP 500" in r["hinweise"][0]
     finally:
         box.close()
