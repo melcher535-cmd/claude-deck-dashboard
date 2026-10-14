@@ -12,7 +12,7 @@ let fwTimer = null;
 const fwStil = document.createElement("style");
 fwStil.textContent = `
   .fwform { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 12px; } .fwform label { display: block; font-size: .8125rem; color: var(--leise); }
-  .fwform .nfeld { margin-top: 4px; } .fwpause { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; } .fwpause input { width: auto; }
+  .fwform .nfeld, .fwform .auswahl, .fwform .auswahlknopf { margin-top: 4px; } .fwpause { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; } .fwpause input { width: auto; }
   .fwwarte { border: 2px solid var(--knapp); }
 `;
 document.head.appendChild(fwStil);
@@ -28,9 +28,9 @@ function fwBauen(v) {
   const status = karte("Status", `<p>${abzeichen(v.aktiv ? "Firewall ist an" : "Firewall ist aus", v.aktiv)}</p><p class="kontext">Standard: ${standard}. Geschützt gegen Aussperren: Ports ${v.geschuetzt.join(", ")}.</p>` +
     `<button class="tab" data-fw="schalten" data-an="${v.aktiv ? "0" : "1"}">${v.aktiv ? "Firewall ausschalten" : "Firewall einschalten"}</button>`);
   const neu = karte("Regel hinzufügen", `<div class="chips">${FW_VORLAGEN.map(([n, p, pr]) => `<span class="nachbar" data-fw="vorlage" data-port="${p}" data-proto="${pr}">${esc(n)}</span>`).join("")}</div>` +
-    `<div class="fwform"><label>Aktion<select class="nfeld" id="fw-aktion"><option value="allow">erlauben</option><option value="deny">verwerfen</option><option value="reject">ablehnen</option><option value="limit">begrenzen (SSH-Schutz)</option></select></label>` +
+    `<div class="fwform"><label>Aktion<select class="auswahl" id="fw-aktion"><option value="allow">erlauben</option><option value="deny">verwerfen</option><option value="reject">ablehnen</option><option value="limit">begrenzen (SSH-Schutz)</option></select></label>` +
     `<label>Port oder Bereich<input class="nfeld" id="fw-port" placeholder="8080 oder 8000:8100" autocomplete="off" inputmode="numeric"></label>` +
-    `<label>Protokoll<select class="nfeld" id="fw-proto"><option>tcp</option><option>udp</option><option value="any">beide</option></select></label>` +
+    `<label>Protokoll<select class="auswahl" id="fw-proto"><option>tcp</option><option>udp</option><option value="any">beide</option></select></label>` +
     `<label>Nur von (leer: alle)<input class="nfeld" id="fw-quelle" placeholder="203.0.113.0/24" autocomplete="off"></label>` +
     `<label>Kommentar<input class="nfeld" id="fw-kommentar" maxlength="40" autocomplete="off"></label></div>` +
     `<label class="fwpause"><input type="checkbox" id="fw-timer" checked> Mit Rücknahme-Timer (60 Sekunden, ohne Bestätigung wird zurückgenommen)</label><button class="tab aktiv" data-fw="neu">Regel hinzufügen</button>`);
