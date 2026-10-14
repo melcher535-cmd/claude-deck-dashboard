@@ -38,6 +38,7 @@ Claude Deck runs on a server you own and shows what Claude Code is doing (sessio
 - [Network](#network)
 - [Server: firewall and Docker](#server-firewall-and-docker)
 - [FTP browser](#ftp-browser)
+- [Server file browser](#server-file-browser)
 - [Notifications](#notifications)
 - [Install as a phone app (iOS and Android)](#install-as-a-phone-app-ios-and-android)
 - [Limits and automatic reset](#limits-and-automatic-reset)
@@ -79,6 +80,7 @@ Then open an SSH tunnel (`ssh -L 8770:127.0.0.1:8770 you@your-server`) and brows
 **Server** (details in [Server: firewall and Docker](#server-firewall-and-docker))
 - Firewall (ufw): rules, listening ports and whether the firewall lets them through, with a 60 second **rollback timer** and protection against locking yourself out
 - Docker: create, start, stop and delete containers from a form or a template, logs, CPU and memory, images
+- Files: browse the server's disk, download, upload, rename, delete (see [Server file browser](#server-file-browser))
 - FTP: browse saved FTP servers, download, upload, create folders and delete (see [FTP browser](#ftp-browser))
 
 **Notifications**
@@ -456,6 +458,15 @@ Both pages live under **Server** in the menu. Every change asks for your passwor
 - Connecting, uploading, creating folders, deleting and removing a connection ask for your password and 2FA code again and are written to the audit log (never with the password). Browsing and downloading work while a connection is open.
 - The server only connects to saved connections. Downloads are capped at 50 MB, uploads at 8 MB (the whole file goes through memory). Folders can only be deleted when they are empty.
 - Not included: SFTP (needs an SSH library), rename, resume and folder upload.
+
+## Server file browser
+
+**Server > Files** shows the disk of the server with the permissions of the user the dashboard runs as. Standard library only.
+
+- Listing is free while you are logged in. Download, upload, new folders, rename and delete ask for your password and 2FA code again and are written to the audit log (with the full path).
+- Careful defaults: delete only removes files and empty folders (never recursive), upload and rename never overwrite, folders directly under `/` cannot be deleted or renamed, deleting a symlink removes the link and not its target.
+- Download is capped at 50 MB and upload at 8 MB (the whole file goes through memory). Listings stop at 2000 entries.
+- Anyone who can pass the step-up can read secrets on the disk, including the dashboard's own `credentials.json`. Keep 2FA on.
 - Environment values are never shown in the confirmation dialog or written to the audit log.
 
 ## Notifications
@@ -578,8 +589,8 @@ Found a vulnerability? Please open a private security advisory on GitHub instead
 | `widgets.py`, `widgets.js` | Overview layout storage and validation; custom widget sources, views and the builder dialog |
 | `netz.py` | Network module: configuration, three operating modes, polling, device list, alarms, history and forecast, agent push, Wake-on-LAN |
 | `netz_typen.py`, `netz_geraete.py`, `netz_dienste.py`, `netz_linux.py`, `netz_snmp.py` | Source types (registry, NAS and routers, services, Linux over SSH or locally, SNMP client) |
-| `firewall.py`, `docker_apps.py`, `ftp_browser.py` | Server modules: ufw rules with rollback timer; Docker Engine over its socket; FTP browser |
-| `firewall.js`, `docker.js`, `ftp.js`, `docker-vorlagen.json` | Pages for all three, and the container templates |
+| `firewall.py`, `docker_apps.py`, `ftp_browser.py`, `dateien.py` | Server modules: ufw rules with rollback timer; Docker Engine over its socket; FTP browser; local file browser |
+| `firewall.js`, `docker.js`, `ftp.js`, `dateien.js`, `docker-vorlagen.json` | Pages for all four, and the container templates |
 | `netz_scan.py`, `netz_http.py` | Device discovery, vendor and type guess, Wake-on-LAN, Tailscale status; HTTP helper with the private-address check |
 | `netz_agent.py` | The agent for the home network |
 | `netz.js`, `netz-einstellungen.js` | Network pages, widget sources, settings, source dialog |
@@ -600,7 +611,7 @@ python3 - <<'EOF'
 import importlib, sys, traceback
 sys.path.insert(0, ".")
 failed = 0
-for name in ("test_server", "test_features", "test_viewer", "test_control", "test_widgets", "test_netz", "test_firewall", "test_docker", "test_ftp"):
+for name in ("test_server", "test_features", "test_viewer", "test_control", "test_widgets", "test_netz", "test_firewall", "test_docker", "test_ftp", "test_dateien"):
     module = importlib.import_module(name)
     for test in dir(module):
         if test.startswith("test_"):

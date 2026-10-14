@@ -24,6 +24,7 @@ from analytics import hours_until_full
 from auth import MIN_PASSWORD_LENGTH, Auth
 from docker_apps import DockerApps
 from features import MONITOR_SECONDS, STREAM_SECONDS, Features
+from dateien import Dateien
 from firewall import Firewall
 from ftp_browser import FtpBrowser
 from netz import Netz
@@ -586,7 +587,7 @@ ROUTES = {"/api/sessions": sessions_data, "/api/vault": vault_data, "/api/live":
           "/api/ranking": ranking_data, "/api/errors": lambda: error_list(glob.glob(SESSIONS)), "/api/vault-health": lambda: vault_health(VAULT),
           "/api/vault-tree": lambda: vault_tree(VAULT), "/api/pins": PINS.all, "/api/widgets": WIDGETS.all, "/api/access": lambda: read_access(ACCESS_LOG), "/api/audit": lambda: read_access(AUDIT_LOG, 200), "/api/account": account_data}
 PAGES = {"/": f"{HERE}/index.html", "/graph.html": f"{VAULT}/graphify-out/graph.html", "/login": f"{HERE}/login.html"}
-SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js", "/widgets.js": f"{HERE}/widgets.js", "/netz.js": f"{HERE}/netz.js", "/netz-einstellungen.js": f"{HERE}/netz-einstellungen.js", "/firewall.js": f"{HERE}/firewall.js", "/docker.js": f"{HERE}/docker.js", "/ftp.js": f"{HERE}/ftp.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
+SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js", "/widgets.js": f"{HERE}/widgets.js", "/netz.js": f"{HERE}/netz.js", "/netz-einstellungen.js": f"{HERE}/netz-einstellungen.js", "/firewall.js": f"{HERE}/firewall.js", "/docker.js": f"{HERE}/docker.js", "/ftp.js": f"{HERE}/ftp.js", "/dateien.js": f"{HERE}/dateien.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
 PUBLIC = {  # App-Symbol und Manifest brauchen keine Anmeldung: iOS holt sie beim "Zum Home-Bildschirm"
     "/manifest.webmanifest": (f"{HERE}/manifest.webmanifest", "application/manifest+json"),
     "/sw.js": (f"{HERE}/sw.js", "text/javascript"), "/i18n.js": (f"{HERE}/i18n.js", "text/javascript"), "/i18n-en.js": (f"{HERE}/i18n-en.js", "text/javascript"), "/icon-180.png": (f"{HERE}/icon-180.png", "image/png"),
@@ -606,6 +607,7 @@ features = Features(types.SimpleNamespace(
     session_id_ok=lambda s: bool(SESSION_ID.match(s))))
 netz = Netz(HERE, auth, lambda text: notify(text), DOMAIN)
 firewall = Firewall(lambda text: notify(text), lambda text: log_audit(AUDIT_LOG, "-", "/api/firewall", 200, text))
+dateien = Dateien()
 ftpb = FtpBrowser(f"{HERE}/ftp-verbindungen.json")
 docker = DockerApps(templates=read_json(f"{HERE}/docker-vorlagen.json", []), notify=lambda text: notify(text))
 ROUTES.update(features.get_routes())
@@ -617,6 +619,7 @@ QUERY_ROUTES, PREFIX_ROUTES = features.query_routes(), features.prefix_routes()
 QUERY_ROUTES.update(netz.query_routes())
 QUERY_ROUTES.update(docker.query_routes())
 QUERY_ROUTES.update(ftpb.query_routes())
+QUERY_ROUTES.update(dateien.query_routes())
 UNGATED = ("/api/firewall/bestaetigen", "/api/firewall/zuruecknehmen")  # nehmen nur eine eigene, noch offene Aenderung an oder zurueck
 
 
@@ -676,6 +679,17 @@ class Handler(BaseHTTPRequestHandler):
             except ValueError as e:
                 self.reply(400, json.dumps({"error": str(e)}).encode(), "application/json")
                 return
+            self.reply(200, body, "application/octet-stream", [("Content-Disposition", f"attachment; filename*=UTF-8''{quote(name)}")])
+            return
+        if path == "/api/dateien/download":  # Inhalt der Serverplatte: nur mit erhoehter Sicherheitsstufe
+            try:
+                if not auth.is_elevated(self.token()):
+                    raise PermissionError("stepup")
+                name, body, real = dateien.download(query)
+            except (PermissionError, ValueError) as e:
+                self.reply(403 if isinstance(e, PermissionError) else 400, json.dumps({"error": str(e)}).encode(), "application/json")
+                return
+            log_audit(AUDIT_LOG, self.client_ip(), path, 200, f"Dateien: {real} geladen")
             self.reply(200, body, "application/octet-stream", [("Content-Disposition", f"attachment; filename*=UTF-8''{quote(name)}")])
             return
         if path == "/api/stream":
@@ -792,7 +806,7 @@ class Handler(BaseHTTPRequestHandler):
             print(f"ntfy: {e!r}", file=sys.stderr)
 
     def handle_api_post(self, path):
-        raw = self.read_body(NETZ_BODY if path.startswith("/api/netz/") else FTP_BODY if path == "/api/ftp/hochladen" else MAX_BODY)
+        raw = self.read_body(NETZ_BODY if path.startswith("/api/netz/") else FTP_BODY if path in ("/api/ftp/hochladen", "/api/dateien/hochladen") else MAX_BODY)
         try:
             data = json.loads(raw or b"{}")
         except ValueError:
@@ -833,10 +847,10 @@ class Handler(BaseHTTPRequestHandler):
                 status, payload = 200, {"ok": True}
             elif path == "/api/widgets":
                 status, payload = 200, WIDGETS.save(data)
-            elif path.startswith(("/api/firewall/", "/api/docker/", "/api/ftp/")):
+            elif path.startswith(("/api/firewall/", "/api/docker/", "/api/ftp/", "/api/dateien/")):
                 if path not in UNGATED and not auth.is_elevated(self.token()):
                     raise PermissionError("stepup")
-                status, payload = firewall.post(path, data) or docker.post(path, data) or ftpb.post(path, data) or (404, {"error": "unbekannt"})
+                status, payload = firewall.post(path, data) or docker.post(path, data) or ftpb.post(path, data) or dateien.post(path, data) or (404, {"error": "unbekannt"})
             else:
                 handled = netz.post(path, data, ip, self.token()) or features.post(path, data, ip, self.token())
                 status, payload = handled or (404, {"error": "unbekannt"})

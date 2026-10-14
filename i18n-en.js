@@ -1088,5 +1088,12 @@
     "Nur leere Ordner lassen sich löschen.": "Only empty folders can be deleted.",
     "Das kann nicht rückgängig gemacht werden.": "This cannot be undone.",
     "Eine gleichnamige Datei wird überschrieben.": "A file with the same name will be overwritten.",
+    "Dateien": "Files",
+    "Nicht lesbar": "Not readable",
+    "Datei laden": "Download file",
+    "Download startet": "Download starting",
+    "Umbenannt": "Renamed",
+    "Nur die ersten 2000 Einträge werden gezeigt.": "Only the first 2000 entries are shown.",
+    "Zeigt die Festplatte des Servers mit den Rechten des Dashboards. Laden, Hochladen, Ordner anlegen, Umbenennen und Löschen verlangen Passwort und Code erneut (5 Minuten) und stehen im Audit. Gelöscht werden nur Dateien und leere Ordner. Hochladen und Umbenennen überschreiben nichts. Ordner direkt unter / sind geschützt. Download bis 50 MB, Upload bis 8 MB.": "Shows the server's disk with the permissions of the dashboard. Download, upload, creating folders, renaming and deleting ask for your password and code again (5 minutes) and are logged in the audit. Only files and empty folders can be deleted. Upload and rename never overwrite anything. Folders directly under / are protected. Download up to 50 MB, upload up to 8 MB.",
   },
 };
