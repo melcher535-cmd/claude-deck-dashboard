@@ -67,5 +67,7 @@ def test_rejects_wrong_types():
 
 
 def test_every_source_has_a_renderer_in_the_front_end():
-    ids = set(re.findall(r"^  (\w+): \{ name:", open(os.path.join(os.path.dirname(__file__), "widgets.js"), encoding="utf-8").read(), re.M))
+    ids = set()
+    for name in ("widgets.js", "netz.js"):  # die Netzwerk-Quellen stehen in netz.js
+        ids |= set(re.findall(r"^  (\w+): \{ name:", open(os.path.join(os.path.dirname(__file__), name), encoding="utf-8").read(), re.M))
     assert ids == set(widgets.SOURCES)

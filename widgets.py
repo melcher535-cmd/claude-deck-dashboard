@@ -5,7 +5,8 @@ from storage import read_json, write_json
 
 SOURCES = ("limit_session", "limit_woche", "limit_verlauf", "kosten", "tokens", "nachrichten", "sessions_aktiv", "sessions_tag", "fehler",
            "gesundheit", "zertifikat", "platte", "arbeitszeit", "notizen_heute", "notizen_neu", "repos", "postfach", "ram", "cpu", "dienste",
-           "verbrauch", "werkzeuge", "sicherung")
+           "verbrauch", "werkzeuge", "sicherung", "netz_geraete", "netz_speicher", "netz_prognose", "netz_temp", "netz_wan", "netz_speedtest", "netz_alarme", "netz_dienste",
+           "netz_strom", "netz_usv", "netz_dns", "netz_verlauf_wan", "netz_verlauf_geraete")
 VIEWS = ("zahl", "ring", "linie", "saeulen", "liste")
 RANGES = (1, 7, 30)
 WIDTHS = ("halb", "voll")

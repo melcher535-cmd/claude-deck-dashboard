@@ -10,3 +10,7 @@ usage-history.jsonl
 __pycache__/
 .impeccable/
 widgets.json
+netzwerk.json
+netz-stand.json
+netz-verlauf.jsonl
+netz-agent.json

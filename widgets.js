@@ -105,7 +105,7 @@ function widgetRing(prozent, farbe) {
 function widgetInhalt(ansicht, d) {
   const kontext = d.kontext ? `<p class="kontext">${esc(d.kontext)}</p>` : "";
   if (ansicht === "ring" && d.prozent != null) return widgetRing(d.prozent, d.ampel ? ampel(d.prozent) : "var(--blau)") + kontext;
-  if (ansicht === "linie") return d.linien && d.linien.length ? linien(d.linien) : leer("Noch keine Messpunkte", "Öffne in Claude Code /usage, dann entsteht der erste Punkt.");
+  if (ansicht === "linie") return d.diagramm ? d.diagramm : d.linien && d.linien.length ? linien(d.linien) : leer("Noch keine Messpunkte", "Öffne in Claude Code /usage, dann entsteht der erste Punkt.");
   if (ansicht === "saeulen") return d.balken && d.balken.length ? saeulen(d.balken) : '<p class="leise">Keine Daten.</p>';
   if (ansicht === "liste") return d.zeilen && d.zeilen.length ? `<div class="wliste">${d.zeilen.map(([name, wert]) => `<div class="zeile"><div>${esc(name)}</div><span class="leise">${esc(wert)}</span></div>`).join("")}</div>` : '<p class="leise">Keine Daten.</p>';
   const verlauf = d.balken && d.balken.length > 1 ? `<div class="spark">${sparkline(d.balken.map(b => b[1]))}</div>` : "";

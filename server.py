@@ -23,6 +23,7 @@ from urllib.request import Request, urlopen
 from analytics import hours_until_full
 from auth import MIN_PASSWORD_LENGTH, Auth
 from features import MONITOR_SECONDS, STREAM_SECONDS, Features
+from netz import Netz
 from notes import with_mobile_layout
 from push import Push
 from widgets import WidgetLayout
@@ -411,6 +412,8 @@ SAMPLE_SECONDS = 300
 HISTORY_POINTS = 600
 SEARCH_MIN = 2
 MAX_BODY = 4096
+NETZ_BODY = 262144  # Konfiguration der Netzwerkseite
+PUSH_BODY = 2 * 1024 * 1024  # Stand eines Agenten
 CREDENTIALS = f"{HERE}/credentials.json"
 ACCESS_LOG = f"{HERE}/access-log.jsonl"
 AUDIT_LOG = f"{HERE}/audit.jsonl"
@@ -579,7 +582,7 @@ ROUTES = {"/api/sessions": sessions_data, "/api/vault": vault_data, "/api/live":
           "/api/ranking": ranking_data, "/api/errors": lambda: error_list(glob.glob(SESSIONS)), "/api/vault-health": lambda: vault_health(VAULT),
           "/api/vault-tree": lambda: vault_tree(VAULT), "/api/pins": PINS.all, "/api/widgets": WIDGETS.all, "/api/access": lambda: read_access(ACCESS_LOG), "/api/audit": lambda: read_access(AUDIT_LOG, 200), "/api/account": account_data}
 PAGES = {"/": f"{HERE}/index.html", "/graph.html": f"{VAULT}/graphify-out/graph.html", "/login": f"{HERE}/login.html"}
-SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js", "/widgets.js": f"{HERE}/widgets.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
+SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js", "/widgets.js": f"{HERE}/widgets.js", "/netz.js": f"{HERE}/netz.js", "/netz-einstellungen.js": f"{HERE}/netz-einstellungen.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
 PUBLIC = {  # App-Symbol und Manifest brauchen keine Anmeldung: iOS holt sie beim "Zum Home-Bildschirm"
     "/manifest.webmanifest": (f"{HERE}/manifest.webmanifest", "application/manifest+json"),
     "/sw.js": (f"{HERE}/sw.js", "text/javascript"), "/i18n.js": (f"{HERE}/i18n.js", "text/javascript"), "/i18n-en.js": (f"{HERE}/i18n-en.js", "text/javascript"), "/icon-180.png": (f"{HERE}/icon-180.png", "image/png"),
@@ -597,11 +600,15 @@ features = Features(types.SimpleNamespace(
     claude_dir=CLAUDE_DIR, claude_bin="/root/.local/bin/claude", roots=["/root"], tmux_socket=None, home=os.path.expanduser("~"),
     live_data=live_data, usage_data=usage_data, notify=lambda text: notify(text), find_session=find_session, read_session=read_session, chat_data=chat_data,
     session_id_ok=lambda s: bool(SESSION_ID.match(s))))
+netz = Netz(HERE, auth, lambda text: notify(text), DOMAIN)
 ROUTES.update(features.get_routes())
+ROUTES.update(netz.get_routes())
 QUERY_ROUTES, PREFIX_ROUTES = features.query_routes(), features.prefix_routes()
+QUERY_ROUTES.update(netz.query_routes())
 
 
 class Handler(BaseHTTPRequestHandler):
+    timeout = 60  # haengende Verbindungen (langsames Senden) nach 60 s kappen
     def client_ip(self):
         return self.headers.get("X-Forwarded-For", self.client_address[0]).split(",")[0].strip()
 
@@ -645,6 +652,9 @@ class Handler(BaseHTTPRequestHandler):
                 self.reply(401, b'{"error": "login"}', "application/json")
             else:
                 self.redirect("/login")
+            return
+        if path == "/netz-agent.zip":
+            self.reply(200, netz.agent_zip(), "application/zip", [("Content-Disposition", 'attachment; filename="netz-agent.zip"')])
             return
         after, search = query.get("after", ["0"])[0], query.get("q", [""])[0]
         if path == "/api/stream":
@@ -692,9 +702,9 @@ class Handler(BaseHTTPRequestHandler):
         except (BrokenPipeError, ConnectionResetError):
             return
 
-    def read_body(self):
+    def read_body(self, limit=MAX_BODY):
         length = self.headers.get("Content-Length", "")
-        return self.rfile.read(int(length)) if length.isdigit() and int(length) <= MAX_BODY else None
+        return self.rfile.read(int(length)) if length.isdigit() and int(length) <= limit else None
 
     def session_cookie(self, token):
         return ("Set-Cookie", f"{COOKIE}={token}; Max-Age={auth.remaining(token)}; {COOKIE_FLAGS}")
@@ -706,12 +716,31 @@ class Handler(BaseHTTPRequestHandler):
             self.redirect("/login", [("Set-Cookie", f"{COOKIE}=; Max-Age=0; {COOKIE_FLAGS}")])
         elif path == "/login":
             self.handle_login()
+        elif path == "/api/netz/push":  # Agent im Heimnetz: eigener Token statt Sitzung
+            self.handle_netz_push()
         elif path.startswith("/api/") and auth.valid(self.token()) and self.headers.get("X-Deck") == "1":
             self.handle_api_post(path)
         elif path.startswith("/api/"):
             self.reply(401, b'{"error": "login"}', "application/json")
         else:
             self.send_error(404)
+
+    def handle_netz_push(self):
+        header, ip = self.headers.get("Authorization", ""), self.client_ip()
+        token = header[7:] if header.startswith("Bearer ") else ""
+        try:
+            netz.token_pruefen(ip, token)  # erst die Berechtigung, dann den (bis zu 2 MB grossen) Inhalt lesen
+            raw = self.read_body(PUSH_BODY)
+            if raw is None:
+                self.send_error(413)
+                return
+            status, result = 200, netz.push(ip, token, raw)
+        except PermissionError:
+            print(f"Agent-Token abgelehnt von {ip}", file=sys.stderr)
+            status, result = 401, {"error": "token"}
+        except ValueError as e:
+            status, result = 400, {"error": str(e)}
+        self.reply(status, json.dumps(result).encode(), "application/json")
 
     def handle_login(self):
         raw = self.read_body()
@@ -739,7 +768,7 @@ class Handler(BaseHTTPRequestHandler):
             print(f"ntfy: {e!r}", file=sys.stderr)
 
     def handle_api_post(self, path):
-        raw = self.read_body()
+        raw = self.read_body(NETZ_BODY if path.startswith("/api/netz/") else MAX_BODY)
         try:
             data = json.loads(raw or b"{}")
         except ValueError:
@@ -781,7 +810,7 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/widgets":
                 status, payload = 200, WIDGETS.save(data)
             else:
-                handled = features.post(path, data, ip, self.token())
+                handled = netz.post(path, data, ip, self.token()) or features.post(path, data, ip, self.token())
                 status, payload = handled or (404, {"error": "unbekannt"})
         except PermissionError:
             status, payload = 403, {"error": "stepup"}
@@ -800,6 +829,7 @@ if __name__ == "__main__":
         raise SystemExit("DECK_PASSWORD fehlt")
     threading.Thread(target=sample_usage_forever, daemon=True).start()
     threading.Thread(target=features.monitor_forever, daemon=True).start()
+    threading.Thread(target=netz.schleife, daemon=True).start()
     if NTFY_TOPIC:
         threading.Thread(target=daily_summary_forever, daemon=True).start()
     ThreadingHTTPServer((HOST, PORT), Handler).serve_forever()

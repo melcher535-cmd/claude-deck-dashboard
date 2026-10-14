@@ -15,6 +15,7 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [Configuration](#configuration)
+- [Network](#network)
 - [Notifications](#notifications)
 - [Install as a phone app (iOS and Android)](#install-as-a-phone-app-ios-and-android)
 - [Limits and automatic reset](#limits-and-automatic-reset)
@@ -33,6 +34,11 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 - Chat view per session (messenger style, coloured diffs for edits), filters, Markdown export, session compare
 - Pin sessions with a note, copy `claude --resume <id>`
 - **Custom widgets** on the overview: Customize → *Widget hinzufügen*. Pick one of 23 sources (limits, costs, tokens, sessions, errors, health, certificate, disk, memory, CPU, services, repositories, mailbox, notes, backups ...), a look (number, ring, line, bars, list), a range and a width, with a live preview. **Drag and drop like on the iPhone:** in *Anpassen* mode the widgets wiggle, grab one by its header bar and drag it, the others move out of the way and the widget snaps into the grid. Widgets and their order are stored on the server (`widgets.json`) and apply on every device
+
+**Network** (see [Network](#network))
+- Pages for devices on your home network, NAS storage and disks, router and internet, services and accessories; 13 matching overview widgets
+- Works three ways: dashboard at home, dashboard on a server reached through Tailscale, or a small agent at home that pushes data
+- 24 source types: SNMP (almost any NAS or router), Synology, TrueNAS, Fritz!Box, UPnP, UniFi, OpenWrt, MikroTik, OPNsense, any Linux NAS over SSH, Pi-hole, AdGuard, Home Assistant, Shelly, Tasmota, UPS (NUT), Immich, web, port and ping checks, certificate expiry, speed test, backup age
 
 **Notifications**
 - Warnings at 80 % and 95 % of a limit, a forecast warning, a message when a limit **resets** and when a watched session finishes
@@ -286,6 +292,67 @@ All of these hold private data, stay in the project folder and are listed in `.g
 | `usage-history.jsonl` | One data point every 5 minutes at most |
 | `pins.json`, `watch.json`, `widgets.json` | Pinned sessions, session alarms, overview layout and custom widgets |
 
+## Network
+
+Under **Netzwerk** the dashboard shows the devices on your home network, NAS systems with free space, disks and RAID state, your router and internet line, and everything around them (UPS, smart sockets, DNS filter, photo server, certificates, backups). All of it also exists as overview widgets (*Customize → Widget hinzufügen → Netzwerk: ...*).
+
+| Page | Shows |
+|---|---|
+| Übersicht | Devices online, NAS storage, internet rate, power use, open notices, new devices, one card per NAS |
+| Geräte | Every device with status, IP, MAC, vendor guess, LAN or Wi-Fi and signal. Rename, mark as known or important, wake up (Wake-on-LAN), search now |
+| Speicher & Platten | Volumes as bars with a **"full in about N days"** forecast, disk temperature and SMART state, RAID, 7-day usage chart |
+| Router & Internet | Connection state, public IP, current rate and line speed, 24-hour rate chart, ad-blocker statistics, speed test |
+| Dienste & Zubehör | Web and port checks, UPS, power use of sockets, certificate expiry, backup age, Immich and Home Assistant values |
+| Einstellungen | Operating mode, sources, alarms, agent access |
+
+### Three ways to run it
+
+Choose under **Netzwerk → Einstellungen → Betriebsart**. You can switch later; sources and history stay.
+
+1. **Im Heimnetz.** The dashboard runs on a device in your home network and queries everything directly. Leave *Netze* empty, the networks of the machine are detected.
+2. **Über Tailscale.** The dashboard runs on a server on the internet. Tailscale connects it to your home network, no port is opened. Install Tailscale on both sides first (https://tailscale.com/download), then:
+   ```bash
+   # on the server running the dashboard
+   sudo tailscale up --accept-routes
+   # at home, on a device that is always on (NAS, Raspberry Pi, mini PC)
+   sudo tailscale up --advertise-routes=192.168.1.0/24
+   echo 'net.ipv4.ip_forward=1' | sudo tee /etc/sysctl.d/99-tailscale.conf && sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+   ```
+   Approve the route in the Tailscale admin console (*Edit route settings*), then enter your home network under *Netze*. Wake-on-LAN, UPnP queries and the speed test only work inside the home network, so add the agent as well if you need them.
+3. **Mit Agent.** A small program at home (`netz_agent.py`, standard library only) queries the devices and sends the result to the dashboard over HTTPS. It only calls out, so nothing at home has to be reachable. Under *Einstellungen → Agent* create the access, download `netz-agent.zip` and save the generated configuration as `netz-agent.json` next to the agent:
+   ```bash
+   python3 netz_agent.py --trocken      # test: print what would be sent
+   python3 netz_agent.py                # run permanently (or as a systemd service)
+   python3 netz_agent.py --entdecken    # list devices in the network with a type suggestion
+   ```
+   The dashboard queues commands for the agent (Wake-on-LAN, "search now") and hands them out on its next report. Agent pushes are accepted in every mode as soon as an access exists.
+
+### What it can read
+
+Any NAS or router works through at least one of the generic paths: **SNMP** (v1 and v2c), **SSH** (a fixed read-only script that reads `/proc`, `df`, `smartctl`, `mdstat` and `zpool`; covers UGREEN, Unraid, OpenMediaVault, TrueNAS SCALE, Proxmox, Raspberry Pi, OpenWrt and any other Linux box), or the agent running on the device itself (type *Dieser Rechner*). On top of that there are vendor types:
+
+| Group | Types |
+|---|---|
+| NAS and routers | SNMP (with Synology and QNAP extras: disk temperature, RAID), SSH, this computer, Synology DSM, TrueNAS, Fritz!Box (TR-064), router over UPnP, UniFi, OpenWrt, MikroTik RouterOS 7, OPNsense |
+| Services | Pi-hole (v5 and v6), AdGuard Home, Immich, web check, port check, ping, certificate expiry, speed test, backup age |
+| Smart home | Home Assistant, Shelly (Gen 1 and 2+), Tasmota, UPS over NUT |
+
+Each type has a form with a short setup hint, and a **Test** button.
+
+**Verification status.** The SNMP client was checked against a real `snmpd`. The vendor APIs are implemented from their documented interfaces and tested against local fake servers, not against real devices of every brand; if a field is missing on your model, the other values still work. QNAP and UGREEN have no official REST API here; use SNMP, SSH or the agent there.
+
+### Alarms and history
+
+Messages go out through the channels you set up under Konto (ntfy, Web Push) once per event, plus one message when the problem is gone: a **new device** (the first scan counts as known), a **volume above 90 %**, a **hot disk**, a **SMART error**, a **degraded RAID**, a **device you marked important** going offline, a **source that stops answering**, **internet down**, **UPS on battery**, a **certificate close to expiry**, a **missing backup** and a **silent agent**. Thresholds are in the settings. Every five minutes a data point is stored (`netz-verlauf.jsonl`, 30 days); the storage forecast fits the growth of the last seven days.
+
+### Safety
+
+- The dashboard only queries addresses in private ranges, loopback and the Tailscale range (`100.64.0.0/10`), never public addresses or the link-local cloud metadata address. Only the certificate check and the speed test may reach public hosts.
+- Changing sources, testing a source, searching the network and creating agent access all need the **step-up** (password and code) and are written to the audit log. Saving shows a diff first.
+- Passwords and keys of sources are stored in `netzwerk.json` (file mode 600) and are never sent back to the browser (shown as `********`). Use read-only accounts on your devices wherever the device allows it. The generated agent configuration contains these secrets: keep it only on the agent machine.
+- The agent token is stored only as a hash; creating a new one invalidates the old. Ten wrong tokens lock the sender for 15 minutes.
+- Data from an agent is cut down to a fixed schema before it is stored or shown.
+
 ## Notifications
 
 **ntfy.sh**: set `DECK_NTFY_TOPIC` in `.env`, install the ntfy app on your phone and subscribe to the same topic. Restart the service.
@@ -386,7 +453,7 @@ Treat this like an admin panel for your server.
 - Secrets are masked in the configuration view. The shortcut API key is stored only as a hash.
 - **Enable 2FA** under Konto and use a long password. Anyone who gets past the login and the step-up controls the host.
 - The original service runs as root. Prefer a dedicated user if you can; remote control then reaches only what that user may do.
-- Never commit `.env`, `credentials.json`, `push-keys.json` or `push-subs.json`. If one of them ever leaks, change the password, delete the file and let the dashboard create a new one.
+- Never commit `.env`, `credentials.json`, `push-keys.json`, `push-subs.json`, `netzwerk.json` or `netz-agent.json`. If one of them ever leaks, change the password, delete the file and let the dashboard create a new one.
 
 Found a vulnerability? Please open a private security advisory on GitHub instead of a public issue.
 
@@ -404,6 +471,11 @@ Found a vulnerability? Please open a private security advisory on GitHub instead
 | `storage.py` | Small JSON file helper |
 | `index.html`, `features.js`, `login.html` | The whole front end, no framework |
 | `widgets.py`, `widgets.js` | Overview layout storage and validation; custom widget sources, views and the builder dialog |
+| `netz.py` | Network module: configuration, three operating modes, polling, device list, alarms, history and forecast, agent push, Wake-on-LAN |
+| `netz_typen.py`, `netz_geraete.py`, `netz_dienste.py`, `netz_linux.py`, `netz_snmp.py` | Source types (registry, NAS and routers, services, Linux over SSH or locally, SNMP client) |
+| `netz_scan.py`, `netz_http.py` | Device discovery, vendor and type guess, Wake-on-LAN, Tailscale status; HTTP helper with the private-address check |
+| `netz_agent.py` | The agent for the home network |
+| `netz.js`, `netz-einstellungen.js` | Network pages, widget sources, settings, source dialog |
 | `i18n.js`, `i18n-en.js` | Language switch: runtime translation engine and the English dictionary |
 | `qrcode.js` | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 (MIT), draws the 2FA QR code in the browser |
 | `manifest.webmanifest`, `icon-*.png`, `favicon-*.png` | Home-screen app metadata and icons |
@@ -420,7 +492,7 @@ python3 - <<'EOF'
 import importlib, sys, traceback
 sys.path.insert(0, ".")
 failed = 0
-for name in ("test_server", "test_features", "test_viewer", "test_control", "test_widgets"):
+for name in ("test_server", "test_features", "test_viewer", "test_control", "test_widgets", "test_netz"):
     module = importlib.import_module(name)
     for test in dir(module):
         if test.startswith("test_"):
@@ -435,6 +507,8 @@ EOF
 ```
 
 ## Known limitations
+
+- Network: SNMP v3 is not supported (v1 and v2c only). Shelly Gen 2+ with device protection (digest login) cannot be read. Wake-on-LAN needs the dashboard or an agent in the same network. The speed test measures from the machine running the dashboard or agent. Names of devices come from the router, then from reverse DNS; phones with a private Wi-Fi address show no vendor.
 
 - Costs are token based estimates, not money. The context bar is relative to 1 million tokens because the real window size per model is not known.
 - Limit values are only as fresh as the Claude Code cache.
