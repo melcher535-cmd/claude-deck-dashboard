@@ -98,8 +98,8 @@ function netzUebersichtBauen(n) {
     stat(`${z.quellen_ok} von ${z.quellen_gesamt}`, "Quellen erreichbar", n.stand ? `Stand ${vor(n.stand * 1000)}` : "");
   const alarme = n.alarme.length ? `<div class="warnung rot"><b>Achtung</b>${n.alarme.map(a => `<div>${netzTn(a.text)}</div>`).join("")}</div>` : "";
   const neue = n.geraete.filter(d => d.neu && d.online);
-  const neueKarte = neue.length ? karte("Neue Geräte im Netz", neue.map(d => `<div class="zeile"><div><b>${netzTn(d.name || d.ip)}</b><small>${netzTn([d.ip, d.hersteller, d.mac].filter(Boolean).join(" · "))}</small></div>` +
-    `<button class="tab" type="button" data-netz="bekannt" data-key="${esc(d.key)}">Bekannt</button></div>`).join("")) : "";
+  const neueKarte = neue.length ? `<div class="raster">${karte("Neue Geräte im Netz", neue.map(d => `<div class="zeile"><div><b>${netzTn(d.name || d.ip)}</b><small>${netzTn([d.ip, d.hersteller, d.mac].filter(Boolean).join(" · "))}</small></div>` +
+    `<button class="tab" type="button" data-netz="bekannt" data-key="${esc(d.key)}">Bekannt</button></div>`).join(""))}</div>` : "";
   const agent = n.modus === "agent" && !n.agent.aktiv && n.agent.zuletzt ? `<p class="warnung">Der Agent im Heimnetz hat sich seit ${vor(n.agent.zuletzt * 1000)} nicht gemeldet.</p>` : "";
   return `${alarme}${agent}<div class="raster kpis">${kacheln}</div>${neueKarte}<div class="raster zwei">${nas.map(q => netzNasKarte(n, q)).join("")}${fehler.map(netzFehlerKarte).join("")}</div>`;
 }

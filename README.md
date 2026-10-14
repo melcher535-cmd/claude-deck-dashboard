@@ -1,16 +1,36 @@
-# Claude Deck Dashboard
+# Claude Deck
 
-A self-hosted web dashboard for people who run [Claude Code](https://claude.com/claude-code) on a server (VPS, home lab). It shows your sessions, usage limits, costs and system health in one place, warns you before a limit runs out, and tells you when it resets.
+**One self-hosted dashboard for your Claude Code sessions and your home network.**
 
-- **Small footprint**: `server.py` plus a dependency-free `index.html`. No build step, no database, no npm.
-- **Reads what Claude Code already writes**: session logs in `~/.claude/projects/` and the usage cache in `~/.claude.json`. No API token needed.
-- **Phone friendly**: installable as a home-screen web app, Web Push notifications, layout tuned for modern iPhones.
-- **Two languages: German and English.** Switch under **Konto → Darstellung → Sprache / Language**. Adding another language takes one file, see [Languages](#languages).
+Claude Deck runs on a server you own and shows what Claude Code is doing (sessions, usage limits, costs, system health) and, new in 1.4, what is happening on your network: which devices are online, how full your NAS is, how your router and internet line behave. It warns you before a limit runs out or a disk fills up, and works as an installable phone app.
+
+![release](https://img.shields.io/github/v/release/melcher535-cmd/claude-deck-dashboard) ![python](https://img.shields.io/badge/python-3.9%2B-blue) ![dependencies](https://img.shields.io/badge/dependencies-none-brightgreen)
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/netzwerk-uebersicht.png" alt="Network overview with devices, NAS storage, internet rate and power use"><br><sub>Network overview</sub></td>
+<td width="50%"><img src="docs/screenshots/netzwerk-geraete.png" alt="List of devices on the home network"><br><sub>Devices on your network</sub></td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/netzwerk-speicher.png" alt="NAS volumes with usage bars, forecast, disks and RAID"><br><sub>NAS storage, disks and the "full in N days" forecast</sub></td>
+<td><img src="docs/screenshots/netzwerk-router.png" alt="Router status, data rate chart, ad blocker and speed test"><br><sub>Router and internet</sub></td>
+</tr>
+</table>
+
+## Why
+
+- **Small footprint.** Python standard library plus one dependency-free `index.html`. No build step, no database, no npm.
+- **Reads what is already there.** Claude Code writes its session logs to `~/.claude/projects/` and its usage cache to `~/.claude.json`; no API token is needed. Network devices are read through SNMP, SSH or their own interfaces.
+- **Three ways to reach your home network.** Run the dashboard at home, run it on a server and connect through Tailscale, or run a tiny agent at home that pushes data. You choose in the settings.
+- **Works for almost any NAS and router.** SNMP, SSH and the agent cover nearly everything; 24 source types add vendor details.
+- **Phone friendly.** Home-screen app, Web Push, layout tuned for modern iPhones, German and English.
+- **Careful with power.** Everything that changes something needs a fresh password and 2FA code and lands in an audit log.
 
 > **Security first.** The optional remote-control features can start sessions, edit Claude settings and run `tmux` commands on the host, and the original setup runs as root. Read [Security](#security) before you expose this to the internet.
 
 ## Contents
 
+- [Quick start](#quick-start)
 - [Features](#features)
 - [Requirements](#requirements)
 - [Installation](#installation)
@@ -25,23 +45,38 @@ A self-hosted web dashboard for people who run [Claude Code](https://claude.com/
 - [Tests](#tests)
 - [Known limitations](#known-limitations)
 
+## Quick start
+
+On a Linux machine where Claude Code already runs for your user:
+
+```bash
+git clone https://github.com/melcher535-cmd/claude-deck-dashboard.git /opt/claude-deck && cd /opt/claude-deck
+cp .env.example .env && nano .env      # set DECK_PASSWORD (12+ characters) and DECK_DOMAIN
+set -a; . ./.env; set +a && python3 server.py
+```
+
+Then open an SSH tunnel (`ssh -L 8770:127.0.0.1:8770 you@your-server`) and browse to `http://127.0.0.1:8770`. Before first use adapt a few paths and set up a service and HTTPS: the [Installation](#installation) walks through it step by step, with a check after every step.
+
 ## Features
 
-**Sessions and usage**
-- Overview with 5-hour and weekly limits (ring gauges), running sessions with live activity ticker and context size estimate
+**Claude Code: sessions and usage**
+- Overview with 5-hour and weekly limits (ring gauges), running sessions with a live activity ticker and context size estimate
 - History, models, projects, tools, cost estimate (tokens, not money), 26-week activity heatmap, work-time Gantt chart
 - Usage history with a forecast ("full in about N hours"), consumption share per session, error patterns
 - Chat view per session (messenger style, coloured diffs for edits), filters, Markdown export, session compare
 - Pin sessions with a note, copy `claude --resume <id>`
-- **Custom widgets** on the overview: Customize → *Widget hinzufügen*. Pick one of 23 sources (limits, costs, tokens, sessions, errors, health, certificate, disk, memory, CPU, services, repositories, mailbox, notes, backups ...), a look (number, ring, line, bars, list), a range and a width, with a live preview. **Drag and drop like on the iPhone:** in *Anpassen* mode the widgets wiggle, grab one by its header bar and drag it, the others move out of the way and the widget snaps into the grid. Widgets and their order are stored on the server (`widgets.json`) and apply on every device
+- **Custom widgets** on the overview: Customize → *Widget hinzufügen*. Pick one of 36 sources, a look (number, ring, line, bars, list), a range and a width, with a live preview. In *Anpassen* mode the widgets wiggle like on the iPhone: grab one by its header bar and drag it. Widgets and their order are stored on the server (`widgets.json`) and apply on every device
 
-**Network** (see [Network](#network))
-- Pages for devices on your home network, NAS storage and disks, router and internet, services and accessories; 13 matching overview widgets
-- Works three ways: dashboard at home, dashboard on a server reached through Tailscale, or a small agent at home that pushes data
-- 24 source types: SNMP (almost any NAS or router), Synology, TrueNAS, Fritz!Box, UPnP, UniFi, OpenWrt, MikroTik, OPNsense, any Linux NAS over SSH, Pi-hole, AdGuard, Home Assistant, Shelly, Tasmota, UPS (NUT), Immich, web, port and ping checks, certificate expiry, speed test, backup age
+**Network** (details in [Network](#network))
+- Pages for devices, NAS storage and disks, router and internet, services and accessories; 13 matching overview widgets
+- Device list with vendor and type guess, new-device alert, Wake-on-LAN, important-device watch
+- NAS volumes with a **"full in about N days"** forecast, disk temperature, SMART and RAID state
+- Router rate, public IP, ad-blocker statistics, UPS, smart sockets, certificate expiry, backup age, speed test
+- 30-day history, alarms through ntfy and Web Push
 
 **Notifications**
 - Warnings at 80 % and 95 % of a limit, a forecast warning, a message when a limit **resets** and when a watched session finishes
+- Network alarms: new device, full volume, hot disk, degraded RAID, source down, internet down, UPS on battery, certificate close to expiry, missing backup
 - Daily summary at 20:00 (Europe/Berlin), alert after repeated failed logins
 - Channels: [ntfy.sh](https://ntfy.sh) and Web Push (RFC 8030 / 8291 / 8292)
 
@@ -113,11 +148,11 @@ The defaults belong to the original server (user `root`). Open `server.py` and c
 
 | Line | Default | Set it to |
 |---|---|---|
-| `VAULT = ...` (line 31) | `/root/Obsidian-sync` | Your Obsidian vault, or any existing folder if you have none |
-| `BACKUP_DIR = ...` (line 589) | `/root/deck-backups` | A folder the service user may write to, for example `/home/you/deck-backups` |
-| `claude_bin=...` (line 595) | `/root/.local/bin/claude` | The output of `which claude` |
-| `roots=[...]` (line 595) | `["/root"]` | The folders in which remote control may start sessions, for example `["/home/you"]` |
-| glob `/root/*backup*` (line 518) | `/root` | Your home folder (only affects the backup list) |
+| `VAULT = ...` (line 33) | `/root/Obsidian-sync` | Your Obsidian vault, or any existing folder if you have none |
+| `BACKUP_DIR = ...` (line 594) | `/root/deck-backups` | A folder the service user may write to, for example `/home/you/deck-backups` |
+| `claude_bin=...` (line 600) | `/root/.local/bin/claude` | The output of `which claude` |
+| `roots=[...]` (line 600) | `["/root"]` | The folders in which remote control may start sessions, for example `["/home/you"]` |
+| glob `/root/*backup*` (line 523) | `/root` | Your home folder (only affects the backup list) |
 
 Quick check that nothing personal is left:
 
@@ -294,38 +329,73 @@ All of these hold private data, stay in the project folder and are listed in `.g
 
 ## Network
 
-Under **Netzwerk** the dashboard shows the devices on your home network, NAS systems with free space, disks and RAID state, your router and internet line, and everything around them (UPS, smart sockets, DNS filter, photo server, certificates, backups). All of it also exists as overview widgets (*Customize → Widget hinzufügen → Netzwerk: ...*).
+Under **Netzwerk** the dashboard shows the devices on your home network, NAS systems with free space, disks and RAID state, your router and internet line, and everything around them. All of it also exists as overview widgets (*Customize → Widget hinzufügen → Netzwerk: ...*). The pages are named in German in the app and translate when you switch the language.
 
 | Page | Shows |
 |---|---|
 | Übersicht | Devices online, NAS storage, internet rate, power use, open notices, new devices, one card per NAS |
 | Geräte | Every device with status, IP, MAC, vendor guess, LAN or Wi-Fi and signal. Rename, mark as known or important, wake up (Wake-on-LAN), search now |
-| Speicher & Platten | Volumes as bars with a **"full in about N days"** forecast, disk temperature and SMART state, RAID, 7-day usage chart |
+| Speicher & Platten | Volumes as bars with a forecast, disk temperature and SMART state, RAID, 7-day usage chart |
 | Router & Internet | Connection state, public IP, current rate and line speed, 24-hour rate chart, ad-blocker statistics, speed test |
 | Dienste & Zubehör | Web and port checks, UPS, power use of sockets, certificate expiry, backup age, Immich and Home Assistant values |
 | Einstellungen | Operating mode, sources, alarms, agent access |
+
+![Settings with the three operating modes](docs/screenshots/netzwerk-einstellungen.png)
 
 ### Three ways to run it
 
 Choose under **Netzwerk → Einstellungen → Betriebsart**. You can switch later; sources and history stay.
 
 1. **Im Heimnetz.** The dashboard runs on a device in your home network and queries everything directly. Leave *Netze* empty, the networks of the machine are detected.
-2. **Über Tailscale.** The dashboard runs on a server on the internet. Tailscale connects it to your home network, no port is opened. Install Tailscale on both sides first (https://tailscale.com/download), then:
-   ```bash
-   # on the server running the dashboard
-   sudo tailscale up --accept-routes
-   # at home, on a device that is always on (NAS, Raspberry Pi, mini PC)
-   sudo tailscale up --advertise-routes=192.168.1.0/24
-   echo 'net.ipv4.ip_forward=1' | sudo tee /etc/sysctl.d/99-tailscale.conf && sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
-   ```
-   Approve the route in the Tailscale admin console (*Edit route settings*), then enter your home network under *Netze*. Wake-on-LAN, UPnP queries and the speed test only work inside the home network, so add the agent as well if you need them.
-3. **Mit Agent.** A small program at home (`netz_agent.py`, standard library only) queries the devices and sends the result to the dashboard over HTTPS. It only calls out, so nothing at home has to be reachable. Under *Einstellungen → Agent* create the access, download `netz-agent.zip` and save the generated configuration as `netz-agent.json` next to the agent:
-   ```bash
-   python3 netz_agent.py --trocken      # test: print what would be sent
-   python3 netz_agent.py                # run permanently (or as a systemd service)
-   python3 netz_agent.py --entdecken    # list devices in the network with a type suggestion
-   ```
-   The dashboard queues commands for the agent (Wake-on-LAN, "search now") and hands them out on its next report. Agent pushes are accepted in every mode as soon as an access exists.
+2. **Über Tailscale.** The dashboard runs on a server on the internet. Tailscale connects it to your home network, no port is opened. See [Tailscale setup](#tailscale-setup) below.
+3. **Mit Agent.** A small program at home (`netz_agent.py`, standard library only) queries the devices and sends the result to the dashboard over HTTPS. It only calls out, so nothing at home has to be reachable. See [Agent setup](#agent-setup).
+
+### Tailscale setup
+
+Install Tailscale on the server running the dashboard and on one device at home that is always on, both signed in to the same account (https://tailscale.com/download). The home device acts as a **subnet router** and offers your home network to the server. Use your own network instead of `192.168.1.0/24` (the first three numbers of your router's address, for example `192.168.188.0/24`).
+
+On the server running the dashboard:
+
+```bash
+sudo tailscale up --accept-routes
+```
+
+At home on **Linux** (NAS, Raspberry Pi, mini PC):
+
+```bash
+sudo tailscale up --advertise-routes=192.168.1.0/24
+echo 'net.ipv4.ip_forward=1' | sudo tee /etc/sysctl.d/99-tailscale.conf && sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
+```
+
+At home on **Windows** (PowerShell as administrator):
+
+```powershell
+tailscale up --advertise-routes=192.168.1.0/24
+Get-NetIPInterface | Where-Object { $_.InterfaceDescription -Match "Tailscale" } | Set-NetIPInterface -Forwarding Enabled
+Set-NetIPInterface -InterfaceAlias "Ethernet" -Forwarding Enabled   # the adapter that connects the PC to your home network
+```
+
+Disable sleep on the PC and give it a fixed address in your router. Forwarding may reset after a reboot; run the last two commands again if the connection stops after a restart.
+
+Then:
+
+1. Open https://login.tailscale.com/admin/machines, choose *Edit route settings* for the home device and approve the route. Also choose *Disable key expiry* for it.
+2. Check on the server: `ping -c 2 192.168.1.1` (your router). `ip route` does not show the route because Tailscale keeps it in its own table (`ip route show table 52`).
+3. In the dashboard choose **Über Tailscale**, enter your network under *Netze*, press *Netz durchsuchen*, add your devices and save.
+
+Wake-on-LAN, UPnP queries and the speed test only work inside the home network itself; add the agent as well if you need them.
+
+### Agent setup
+
+Under *Einstellungen → Agent* create the access, download `netz-agent.zip`, unpack it at home (Python 3.9 or newer) and save the generated configuration as `netz-agent.json` next to the agent:
+
+```bash
+python3 netz_agent.py --trocken      # test: print what would be sent
+python3 netz_agent.py                # run permanently (or as a systemd service)
+python3 netz_agent.py --entdecken    # list devices in the network with a type suggestion
+```
+
+The dashboard queues commands for the agent (Wake-on-LAN, "search now") and hands them out on its next report. Agent pushes are accepted in every mode as soon as an access exists.
 
 ### What it can read
 
@@ -337,9 +407,14 @@ Any NAS or router works through at least one of the generic paths: **SNMP** (v1 
 | Services | Pi-hole (v5 and v6), AdGuard Home, Immich, web check, port check, ping, certificate expiry, speed test, backup age |
 | Smart home | Home Assistant, Shelly (Gen 1 and 2+), Tasmota, UPS over NUT |
 
-Each type has a form with a short setup hint, and a **Test** button.
+Each type has a form with a short setup hint and a **Test** button. Notes for the common ones:
 
-**Verification status.** The SNMP client was checked against a real `snmpd`. The vendor APIs are implemented from their documented interfaces and tested against local fake servers, not against real devices of every brand; if a field is missing on your model, the other values still work. QNAP and UGREEN have no official REST API here; use SNMP, SSH or the agent there.
+- **Fritz!Box:** use the box's IP address (not `fritz.box`, a server outside your home cannot resolve it), port `49000`, enable *Heimnetz → Netzwerk → Netzwerkeinstellungen → Zugriff für Anwendungen zulassen* (TR-064) and enter a user with the right "FRITZ!Box Einstellungen". The data rate is read over TR-064 and, on models that refuse that, over the UPnP interface.
+- **Synology:** a dedicated user in the administrators group without two-factor for the DSM type, or enable SNMP (*Control Panel → Terminal & SNMP*) for a read-only path.
+- **UGREEN, Unraid, OpenMediaVault, QNAP, TrueNAS SCALE:** use SSH with a key, SNMP, or the agent. There is no vendor REST type for these.
+- **Pi-hole v6:** create an app password in the web settings.
+
+**Verification status.** The SNMP client was checked against a real `snmpd` and the Fritz!Box login against a fake box that demands digest authentication. The other vendor interfaces are implemented from their documented APIs and tested against local fake servers, not against real devices of every brand; if a field is missing on your model, the other values still work.
 
 ### Alarms and history
 
@@ -347,11 +422,11 @@ Messages go out through the channels you set up under Konto (ntfy, Web Push) onc
 
 ### Safety
 
-- The dashboard only queries addresses in private ranges, loopback and the Tailscale range (`100.64.0.0/10`), never public addresses or the link-local cloud metadata address. Only the certificate check and the speed test may reach public hosts.
+- The dashboard only queries addresses in private ranges, loopback and the Tailscale range (`100.64.0.0/10`), never public addresses or the link-local cloud metadata address. A name is resolved once and the connection goes to that checked address. Redirects and non-HTTP schemes are refused. Only the certificate check and the speed test may reach public hosts.
 - Changing sources, testing a source, searching the network and creating agent access all need the **step-up** (password and code) and are written to the audit log. Saving shows a diff first.
 - Passwords and keys of sources are stored in `netzwerk.json` (file mode 600) and are never sent back to the browser (shown as `********`). Use read-only accounts on your devices wherever the device allows it. The generated agent configuration contains these secrets: keep it only on the agent machine.
-- The agent token is stored only as a hash; creating a new one invalidates the old. Ten wrong tokens lock the sender for 15 minutes.
-- Data from an agent is cut down to a fixed schema before it is stored or shown.
+- The agent token is stored only as a hash; creating a new one invalidates the old. Ten wrong tokens lock the sender for 15 minutes. The body of an agent request is read only after the token was accepted.
+- Data from an agent or a device is cut down to a fixed schema and size before it is stored or shown. Output of SSH commands is capped.
 
 ## Notifications
 
@@ -476,6 +551,7 @@ Found a vulnerability? Please open a private security advisory on GitHub instead
 | `netz_scan.py`, `netz_http.py` | Device discovery, vendor and type guess, Wake-on-LAN, Tailscale status; HTTP helper with the private-address check |
 | `netz_agent.py` | The agent for the home network |
 | `netz.js`, `netz-einstellungen.js` | Network pages, widget sources, settings, source dialog |
+| `docs/screenshots/` | Pictures used in this README (made with invented sample data) |
 | `i18n.js`, `i18n-en.js` | Language switch: runtime translation engine and the English dictionary |
 | `qrcode.js` | [qrcode-generator](https://github.com/kazuhikoarase/qrcode-generator) 1.4.4 (MIT), draws the 2FA QR code in the browser |
 | `manifest.webmanifest`, `icon-*.png`, `favicon-*.png` | Home-screen app metadata and icons |
@@ -508,7 +584,7 @@ EOF
 
 ## Known limitations
 
-- Network: SNMP v3 is not supported (v1 and v2c only). Shelly Gen 2+ with device protection (digest login) cannot be read. Wake-on-LAN needs the dashboard or an agent in the same network. The speed test measures from the machine running the dashboard or agent. Names of devices come from the router, then from reverse DNS; phones with a private Wi-Fi address show no vendor.
+- Network: SNMP v3 is not supported (v1 and v2c only). Shelly Gen 2+ with device protection (digest login) cannot be read. Wake-on-LAN needs the dashboard or an agent in the same network. The speed test measures from the machine running the dashboard or agent. Vendor interfaces are tested against fake servers, not against every real device. Names of devices come from the router, then from reverse DNS; phones with a private Wi-Fi address show no vendor.
 
 - Costs are token based estimates, not money. The context bar is relative to 1 million tokens because the real window size per model is not known.
 - Limit values are only as fresh as the Claude Code cache.
