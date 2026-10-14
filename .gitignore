@@ -11,6 +11,7 @@ __pycache__/
 .impeccable/
 widgets.json
 netzwerk.json
+ftp-verbindungen.json
 netz-stand.json
 netz-verlauf.jsonl
 netz-agent.json

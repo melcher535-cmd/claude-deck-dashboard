@@ -3,7 +3,7 @@
 
 GRUPPEN.server = ["Server", "#server/firewall"];
 gruppeAnlegen("server", "Server", '<rect x="4" y="4" width="16" height="6" rx="1.5"/><rect x="4" y="14" width="16" height="6" rx="1.5"/><path d="M8 7h.01M8 17h.01"/>',
-  [["#server/firewall", "Firewall"], ["#server/docker", "Docker"]]);
+  [["#server/firewall", "Firewall"], ["#server/docker", "Docker"], ["#server/ftp", "FTP"]]);
 
 const FW_VORLAGEN = [["SSH", "22", "tcp"], ["HTTP", "80", "tcp"], ["HTTPS", "443", "tcp"], ["HTTP/3 (UDP 443)", "443", "udp"]];
 const FW_ZUSTAND = { lokal: ["nur lokal", true], offen: ["offen", true], eingeschraenkt: ["eingeschränkt", true], blockiert: ["von der Firewall blockiert", true], docker: ["Docker: ufw greift hier nicht", false] };
