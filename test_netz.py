@@ -807,3 +807,74 @@ def test_runaway_ssh_output_and_hanging_commands_are_cut_off():
     finally:
         netz_linux.TIMEOUT = alt
     assert netz_linux.ausfuehren(["sh", "-c", "cat; echo fehler >&2"], "hallo") == ("hallo", "fehler\n")
+
+
+class FakeFritz:
+    """Fritz!Box-Attrappe: alle SOAP-Aufrufe verlangen Digest-Anmeldung (Benutzer u, Passwort p), wie neuere FRITZ!OS-Versionen."""
+
+    def __init__(self):
+        import hashlib
+        import re
+        fake = self
+        self.log = []
+
+        antworten = {"GetStatusInfo": "<NewConnectionStatus>Connected</NewConnectionStatus>", "GetExternalIPAddress": "<NewExternalIPAddress>84.1.2.3</NewExternalIPAddress>",
+                     "GetAddonInfos": "<NewByteSendRate>1000</NewByteSendRate><NewByteReceiveRate>5000</NewByteReceiveRate>",
+                     "GetCommonLinkProperties": "<NewLayer1DownstreamMaxBitRate>250000000</NewLayer1DownstreamMaxBitRate><NewLayer1UpstreamMaxBitRate>40000000</NewLayer1UpstreamMaxBitRate>",
+                     "GetInfo": "<NewModelName>FRITZ!Box 7590</NewModelName><NewSoftwareVersion>7.57</NewSoftwareVersion><NewUpTime>3600</NewUpTime>",
+                     "GetHostNumberOfEntries": "<NewHostNumberOfEntries>0</NewHostNumberOfEntries>"}
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self):
+                self.rfile.read(int(self.headers.get("Content-Length") or 0))
+                aktion = self.headers["SOAPACTION"].strip('"').split("#")[1]
+                kopf = self.headers.get("Authorization", "")
+                fake.log.append((aktion, bool(kopf)))
+                if not self.digest_ok(kopf):
+                    self.send_response(401)
+                    self.send_header("WWW-Authenticate", 'Digest realm="F!Box", nonce="abc123", qop="auth", algorithm=MD5')
+                    self.send_header("Content-Length", "0")
+                    self.end_headers()
+                    return
+                body = f'<?xml version="1.0"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/"><s:Body><u:{aktion}Response xmlns:u="urn:dslforum-org:service:x:1">{antworten[aktion]}</u:{aktion}Response></s:Body></s:Envelope>'.encode()
+                self.send_response(200)
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+
+            def digest_ok(self, kopf):
+                if not kopf.startswith("Digest "):
+                    return False
+                w = dict(re.findall(r'(\w+)="?([^",]+)"?', kopf[7:]))
+                md5 = lambda t: hashlib.md5(t.encode()).hexdigest()
+                ha1, ha2 = md5(f"u:{w.get('realm')}:p"), md5(f"POST:{w.get('uri')}")
+                return w.get("username") == "u" and w.get("response") == md5(f"{ha1}:{w['nonce']}:{w['nc']}:{w['cnonce']}:{w['qop']}:{ha2}")
+
+            def log_message(self, *args):
+                pass
+
+        self.server = ThreadingHTTPServer((PRIVAT, 0), Handler)
+        self.port = self.server.server_address[1]
+        threading.Thread(target=self.server.serve_forever, daemon=True).start()
+
+    def close(self):
+        self.server.shutdown()
+        self.server.server_close()
+
+
+def test_fritzbox_logs_in_with_digest_for_every_call_including_status_info():
+    box = FakeFritz()
+    try:
+        r = ok(abfragen(src("fritzbox", port=box.port, benutzer="u", passwort="p"), {}))
+        assert r["wan"]["verbunden"] and r["wan"]["ip"] == "84.1.2.3" and r["wan"]["rx"] == 5000 and r["modell"] == "FRITZ!Box 7590"
+    finally:
+        box.close()
+
+
+def test_fritzbox_says_what_is_missing_when_the_login_is_absent_or_wrong():
+    box = FakeFritz()
+    try:
+        assert "Anmeldung" in abfragen(src("fritzbox", port=box.port), {})["fehler"]
+        assert "lehnt" in abfragen(src("fritzbox", port=box.port, benutzer="u", passwort="falsch"), {})["fehler"]
+    finally:
+        box.close()

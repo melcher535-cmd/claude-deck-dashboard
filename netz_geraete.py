@@ -226,14 +226,16 @@ def soap(b, pfad, dienst, aktion, argumente="", opener=None):
     umschlag = (f'<?xml version="1.0"?><s:Envelope xmlns:s="http://schemas.xmlsoap.org/soap/envelope/" s:encodingStyle="http://schemas.xmlsoap.org/soap/encoding/">'
                 f'<s:Body><u:{aktion} xmlns:u="{dienst}">{argumente}</u:{aktion}></s:Body></s:Envelope>')
     status, body = anfrage(f"{b}{pfad}", "POST", {"Content-Type": 'text/xml; charset="utf-8"', "SOAPACTION": f'"{dienst}#{aktion}"'}, umschlag, opener=opener)
+    if status == 401:
+        raise NetzFehler("Fritz!Box verlangt eine Anmeldung: Benutzer und Passwort eintragen" if opener is None else "Fritz!Box lehnt Benutzer oder Passwort ab")
     if status >= 400:
         raise NetzFehler(f"{aktion}: HTTP {status}")
     return {el.tag.rsplit("}", 1)[-1]: (el.text or "") for el in ET.fromstring(body).iter() if el.tag.rsplit("}", 1)[-1].startswith("New")}
 
 
-def digest_opener(user, passwort):
+def digest_opener(basis_url, user, passwort):
     manager = urllib.request.HTTPPasswordMgrWithDefaultRealm()
-    manager.add_password(None, "http://", user, passwort)
+    manager.add_password(None, basis_url, user, passwort)
     return sicherer_opener(urllib.request.HTTPDigestAuthHandler(manager))
 
 
@@ -251,17 +253,17 @@ def fritz_clients(b, opener):
      "In der Fritz!Box: Heimnetz → Netzwerk → Netzwerkeinstellungen → „Zugriff für Anwendungen zulassen“ (TR-064) einschalten und einen Benutzer mit Rechten anlegen. Ohne Anmeldung gibt es Datenrate und öffentliche IP, mit Anmeldung auch Modell und Geräteliste.")
 def fritzbox(src, state):
     b = f"http://{src['host']}:{int(src.get('port') or 49000)}"
-    opener = digest_opener(src["benutzer"], src.get("passwort", "")) if src.get("benutzer") else None
+    opener = digest_opener(b, src["benutzer"], src.get("passwort", "")) if src.get("benutzer") else None
     verbindung, fehler = None, None
     for pfad, dienst in TR064_VERBINDUNG:
         try:
-            verbindung = (soap(b, pfad, dienst, "GetStatusInfo"), soap(b, pfad, dienst, "GetExternalIPAddress"))
+            verbindung = (soap(b, pfad, dienst, "GetStatusInfo", opener=opener), soap(b, pfad, dienst, "GetExternalIPAddress", opener=opener))
             break
         except NetzFehler as e:
-            fehler = e
+            fehler = fehler or e  # den ersten Fehler zeigen (z. B. fehlende Anmeldung), nicht den des zweiten Versuchs
     if verbindung is None:
         raise fehler
-    zaehler, link = soap(b, *FRITZ_IF, "GetAddonInfos"), soap(b, *FRITZ_IF, "GetCommonLinkProperties")
+    zaehler, link = soap(b, *FRITZ_IF, "GetAddonInfos", opener=opener), soap(b, *FRITZ_IF, "GetCommonLinkProperties", opener=opener)
     wan = {"verbunden": verbindung[0].get("NewConnectionStatus") == "Connected", "ip": verbindung[1].get("NewExternalIPAddress", ""),
            "rx": int(zaehler.get("NewByteReceiveRate") or 0), "tx": int(zaehler.get("NewByteSendRate") or 0),
            "down_max": int(link.get("NewLayer1DownstreamMaxBitRate") or 0), "up_max": int(link.get("NewLayer1UpstreamMaxBitRate") or 0)}
