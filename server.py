@@ -22,7 +22,9 @@ from urllib.request import Request, urlopen
 
 from analytics import hours_until_full
 from auth import MIN_PASSWORD_LENGTH, Auth
+from docker_apps import DockerApps
 from features import MONITOR_SECONDS, STREAM_SECONDS, Features
+from firewall import Firewall
 from netz import Netz
 from notes import with_mobile_layout
 from push import Push
@@ -582,7 +584,7 @@ ROUTES = {"/api/sessions": sessions_data, "/api/vault": vault_data, "/api/live":
           "/api/ranking": ranking_data, "/api/errors": lambda: error_list(glob.glob(SESSIONS)), "/api/vault-health": lambda: vault_health(VAULT),
           "/api/vault-tree": lambda: vault_tree(VAULT), "/api/pins": PINS.all, "/api/widgets": WIDGETS.all, "/api/access": lambda: read_access(ACCESS_LOG), "/api/audit": lambda: read_access(AUDIT_LOG, 200), "/api/account": account_data}
 PAGES = {"/": f"{HERE}/index.html", "/graph.html": f"{VAULT}/graphify-out/graph.html", "/login": f"{HERE}/login.html"}
-SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js", "/widgets.js": f"{HERE}/widgets.js", "/netz.js": f"{HERE}/netz.js", "/netz-einstellungen.js": f"{HERE}/netz-einstellungen.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
+SCRIPTS = {"/qrcode.js": f"{HERE}/qrcode.js", "/features.js": f"{HERE}/features.js", "/control.js": f"{HERE}/control.js", "/widgets.js": f"{HERE}/widgets.js", "/netz.js": f"{HERE}/netz.js", "/netz-einstellungen.js": f"{HERE}/netz-einstellungen.js", "/firewall.js": f"{HERE}/firewall.js", "/docker.js": f"{HERE}/docker.js"}  # qrcode-generator 1.4.4 (MIT) erzeugt den QR-Code im Browser
 PUBLIC = {  # App-Symbol und Manifest brauchen keine Anmeldung: iOS holt sie beim "Zum Home-Bildschirm"
     "/manifest.webmanifest": (f"{HERE}/manifest.webmanifest", "application/manifest+json"),
     "/sw.js": (f"{HERE}/sw.js", "text/javascript"), "/i18n.js": (f"{HERE}/i18n.js", "text/javascript"), "/i18n-en.js": (f"{HERE}/i18n-en.js", "text/javascript"), "/icon-180.png": (f"{HERE}/icon-180.png", "image/png"),
@@ -601,10 +603,16 @@ features = Features(types.SimpleNamespace(
     live_data=live_data, usage_data=usage_data, notify=lambda text: notify(text), find_session=find_session, read_session=read_session, chat_data=chat_data,
     session_id_ok=lambda s: bool(SESSION_ID.match(s))))
 netz = Netz(HERE, auth, lambda text: notify(text), DOMAIN)
+firewall = Firewall(lambda text: notify(text), lambda text: log_audit(AUDIT_LOG, "-", "/api/firewall", 200, text))
+docker = DockerApps(templates=read_json(f"{HERE}/docker-vorlagen.json", []), notify=lambda text: notify(text))
 ROUTES.update(features.get_routes())
 ROUTES.update(netz.get_routes())
+ROUTES.update(firewall.get_routes())
+ROUTES.update(docker.get_routes())
 QUERY_ROUTES, PREFIX_ROUTES = features.query_routes(), features.prefix_routes()
 QUERY_ROUTES.update(netz.query_routes())
+QUERY_ROUTES.update(docker.query_routes())
+UNGATED = ("/api/firewall/bestaetigen", "/api/firewall/zuruecknehmen")  # nehmen nur eine eigene, noch offene Aenderung an oder zurueck
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -809,6 +817,10 @@ class Handler(BaseHTTPRequestHandler):
                 status, payload = 200, {"ok": True}
             elif path == "/api/widgets":
                 status, payload = 200, WIDGETS.save(data)
+            elif path.startswith(("/api/firewall/", "/api/docker/")):
+                if path not in UNGATED and not auth.is_elevated(self.token()):
+                    raise PermissionError("stepup")
+                status, payload = firewall.post(path, data) or docker.post(path, data) or (404, {"error": "unbekannt"})
             else:
                 handled = netz.post(path, data, ip, self.token()) or features.post(path, data, ip, self.token())
                 status, payload = handled or (404, {"error": "unbekannt"})

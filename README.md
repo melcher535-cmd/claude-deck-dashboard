@@ -36,6 +36,7 @@ Claude Deck runs on a server you own and shows what Claude Code is doing (sessio
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Network](#network)
+- [Server: firewall and Docker](#server-firewall-and-docker)
 - [Notifications](#notifications)
 - [Install as a phone app (iOS and Android)](#install-as-a-phone-app-ios-and-android)
 - [Limits and automatic reset](#limits-and-automatic-reset)
@@ -73,6 +74,10 @@ Then open an SSH tunnel (`ssh -L 8770:127.0.0.1:8770 you@your-server`) and brows
 - NAS volumes with a **"full in about N days"** forecast, disk temperature, SMART and RAID state
 - Router rate, public IP, ad-blocker statistics, UPS, smart sockets, certificate expiry, backup age, speed test
 - 30-day history, alarms through ntfy and Web Push
+
+**Server** (details in [Server: firewall and Docker](#server-firewall-and-docker))
+- Firewall (ufw): rules, listening ports and whether the firewall lets them through, with a 60 second **rollback timer** and protection against locking yourself out
+- Docker: create, start, stop and delete containers from a form or a template, logs, CPU and memory, images
 
 **Notifications**
 - Warnings at 80 % and 95 % of a limit, a forecast warning, a message when a limit **resets** and when a watched session finishes
@@ -428,6 +433,19 @@ Messages go out through the channels you set up under Konto (ntfy, Web Push) onc
 - The agent token is stored only as a hash; creating a new one invalidates the old. Ten wrong tokens lock the sender for 15 minutes. The body of an agent request is read only after the token was accepted.
 - Data from an agent or a device is cut down to a fixed schema and size before it is stored or shown. Output of SSH commands is capped.
 
+## Server: firewall and Docker
+
+Both pages live under **Server** in the menu. Every change asks for your password and 2FA code again (5 minutes) and is written to the audit log.
+
+**Firewall.** Works on top of `ufw` (install it and enable it first). You see the rules, the ports the server listens on and whether each one is open, restricted, blocked or local. Add or delete a rule with port or range, protocol, source address and a comment. SSH, 80 and 443 cannot be blocked or deleted without an explicit confirmation. With *rollback timer* switched on (default) the server restores the previous rules by itself after 60 seconds unless you confirm. Only one unconfirmed change can wait at a time.
+
+**Docker.** Needs Docker Engine on the server (`apt install docker.io`). Talks to `/var/run/docker.sock` with the standard library only. The dashboard only manages containers it created itself (label `deck.managed=1`); all others are listed read-only.
+
+- Defaults are careful: ports bind to `127.0.0.1` only, data lives under `/srv/deck-apps/<name>/`, no privileged mode, no host network, no Docker socket inside the container, log files capped at 3 x 10 MB.
+- *Open to the outside* binds a port to all addresses. **Docker bypasses ufw for published ports**, so the firewall page marks them and does not protect them.
+- Templates come from `docker-vorlagen.json` (Nginx, Uptime Kuma, Vaultwarden, Gitea, Jellyfin, Whoami). Add your own entries there.
+- Environment values are never shown in the confirmation dialog or written to the audit log.
+
 ## Notifications
 
 **ntfy.sh**: set `DECK_NTFY_TOPIC` in `.env`, install the ntfy app on your phone and subscribe to the same topic. Restart the service.
@@ -548,6 +566,8 @@ Found a vulnerability? Please open a private security advisory on GitHub instead
 | `widgets.py`, `widgets.js` | Overview layout storage and validation; custom widget sources, views and the builder dialog |
 | `netz.py` | Network module: configuration, three operating modes, polling, device list, alarms, history and forecast, agent push, Wake-on-LAN |
 | `netz_typen.py`, `netz_geraete.py`, `netz_dienste.py`, `netz_linux.py`, `netz_snmp.py` | Source types (registry, NAS and routers, services, Linux over SSH or locally, SNMP client) |
+| `firewall.py`, `docker_apps.py` | Server module: ufw rules with rollback timer; Docker Engine over its socket |
+| `firewall.js`, `docker.js`, `docker-vorlagen.json` | Pages for both, and the container templates |
 | `netz_scan.py`, `netz_http.py` | Device discovery, vendor and type guess, Wake-on-LAN, Tailscale status; HTTP helper with the private-address check |
 | `netz_agent.py` | The agent for the home network |
 | `netz.js`, `netz-einstellungen.js` | Network pages, widget sources, settings, source dialog |
@@ -568,7 +588,7 @@ python3 - <<'EOF'
 import importlib, sys, traceback
 sys.path.insert(0, ".")
 failed = 0
-for name in ("test_server", "test_features", "test_viewer", "test_control", "test_widgets", "test_netz"):
+for name in ("test_server", "test_features", "test_viewer", "test_control", "test_widgets", "test_netz", "test_firewall", "test_docker"):
     module = importlib.import_module(name)
     for test in dir(module):
         if test.startswith("test_"):
@@ -586,6 +606,7 @@ EOF
 
 - Network: SNMP v3 is not supported (v1 and v2c only). Shelly Gen 2+ with device protection (digest login) cannot be read. Wake-on-LAN needs the dashboard or an agent in the same network. The speed test measures from the machine running the dashboard or agent. Vendor interfaces are tested against fake servers, not against every real device. Names of devices come from the router, then from reverse DNS; phones with a private Wi-Fi address show no vendor.
 
+- Docker: no Compose files, no image update check yet, and no firewall for published Docker ports (see above).
 - Costs are token based estimates, not money. The context bar is relative to 1 million tokens because the real window size per model is not known.
 - Limit values are only as fresh as the Claude Code cache.
 - Only the interface is translated; server messages such as push notifications stay German (see [Languages](#languages)).

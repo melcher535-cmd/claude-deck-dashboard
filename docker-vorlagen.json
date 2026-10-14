@@ -1,0 +1,14 @@
+[
+  {"id": "whoami", "name": "Whoami (Test)", "beschreibung": "Winziger Webserver, der seine Anfrage zeigt. Zum Ausprobieren.", "image": "traefik/whoami:latest",
+   "ports": [{"host": 8081, "container": 80, "proto": "tcp"}], "volumes": [], "env": []},
+  {"id": "nginx", "name": "Nginx", "beschreibung": "Webserver für eine eigene Seite. Dateien liegen im Ordner html.", "image": "nginx:alpine",
+   "ports": [{"host": 8082, "container": 80, "proto": "tcp"}], "volumes": [{"sub": "html", "pfad": "/usr/share/nginx/html"}], "env": []},
+  {"id": "uptime-kuma", "name": "Uptime Kuma", "beschreibung": "Überwacht Webseiten und Dienste und meldet Ausfälle.", "image": "louislam/uptime-kuma:1",
+   "ports": [{"host": 3001, "container": 3001, "proto": "tcp"}], "volumes": [{"sub": "data", "pfad": "/app/data"}], "env": []},
+  {"id": "vaultwarden", "name": "Vaultwarden", "beschreibung": "Passwortmanager, kompatibel mit Bitwarden. Nur über HTTPS sinnvoll nutzbar.", "image": "vaultwarden/server:latest",
+   "ports": [{"host": 8083, "container": 80, "proto": "tcp"}], "volumes": [{"sub": "data", "pfad": "/data"}], "env": []},
+  {"id": "gitea", "name": "Gitea", "beschreibung": "Eigener Git-Server mit Weboberfläche.", "image": "gitea/gitea:latest",
+   "ports": [{"host": 3000, "container": 3000, "proto": "tcp"}], "volumes": [{"sub": "data", "pfad": "/data"}], "env": []},
+  {"id": "jellyfin", "name": "Jellyfin", "beschreibung": "Medienserver für Filme, Serien und Musik. Medien in den Ordner media legen.", "image": "jellyfin/jellyfin:latest",
+   "ports": [{"host": 8096, "container": 8096, "proto": "tcp"}], "volumes": [{"sub": "config", "pfad": "/config"}, {"sub": "media", "pfad": "/media"}], "env": []}
+]
