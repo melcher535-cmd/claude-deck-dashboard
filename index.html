@@ -191,10 +191,11 @@
   .qr { width: 210px; margin: 12px 0; overflow: hidden; border-radius: 16px; box-shadow: 0 0 0 .5px var(--rand); }
   .formular { display: grid; gap: 12px; max-width: 420px; }
   .feld { display: grid; gap: 4px; color: var(--leise); font-size: 0.8125rem; }
-  .formular input, .chatwerkzeug input { min-width: 0; padding: 9px 12px; border: 0; border-radius: 10px; outline: none; background: var(--eingabe); color: var(--text); font: 1rem var(--schrift); transition: box-shadow .15s; }
-  .formular input:focus, .chatwerkzeug input:focus { box-shadow: 0 0 0 3.5px rgba(var(--blau-rgb), .4); }
+  .formular input, .chatwerkzeug > input { min-width: 0; padding: 9px 12px; border: 0; border-radius: 10px; outline: none; background: var(--eingabe); color: var(--text); font: 1rem var(--schrift); transition: box-shadow .15s; }
+  .formular input:focus, .chatwerkzeug > input:focus { box-shadow: 0 0 0 3.5px rgba(var(--blau-rgb), .4); }
   .chatwerkzeug { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 6px; }
-  .chatwerkzeug input { flex: 1; min-width: 180px; max-width: 360px; font-size: 0.875rem; }
+  .chatwerkzeug > input { flex: 1; min-width: 180px; max-width: 360px; font-size: 0.875rem; }
+  .chatwerkzeug .suche-gross { flex: 1; margin: 0; }
 
   /* Chat wie iMessage */
   .chatkopf { position: sticky; top: var(--navh); z-index: 20; margin: 0 -32px 16px; padding: 10px 32px; background: var(--nav);
@@ -400,7 +401,7 @@
     .chatkopf { padding: 8px 12px; border-radius: 20px; }
     .chatkopf .chatwerkzeug { flex-wrap: nowrap; overflow-x: auto; margin: 0 0 6px; padding-bottom: 2px; scrollbar-width: none; }
     .chatkopf .chatwerkzeug > * { flex: none; }
-    .chatkopf .chatwerkzeug input { width: 150px; min-width: 0; }
+    .chatkopf .chatwerkzeug > input { width: 150px; min-width: 0; }
     .chatkopf .segment { display: flex; width: 100%; } .chatkopf .seg { flex: 1; padding: 4px 6px; }
     #chattitel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #chatdauer { display: none; }
