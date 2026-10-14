@@ -806,7 +806,7 @@ class Handler(BaseHTTPRequestHandler):
             print(f"ntfy: {e!r}", file=sys.stderr)
 
     def handle_api_post(self, path):
-        raw = self.read_body(NETZ_BODY if path.startswith("/api/netz/") else FTP_BODY if path in ("/api/ftp/hochladen", "/api/dateien/hochladen") else MAX_BODY)
+        raw = self.read_body(NETZ_BODY if path.startswith("/api/netz/") else FTP_BODY if path in ("/api/ftp/hochladen", "/api/dateien/hochladen", "/api/dateien/speichern") else MAX_BODY)
         try:
             data = json.loads(raw or b"{}")
         except ValueError:

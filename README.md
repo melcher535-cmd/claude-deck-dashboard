@@ -80,7 +80,7 @@ Then open an SSH tunnel (`ssh -L 8770:127.0.0.1:8770 you@your-server`) and brows
 **Server** (details in [Server: firewall and Docker](#server-firewall-and-docker))
 - Firewall (ufw): rules, listening ports and whether the firewall lets them through, with a 60 second **rollback timer** and protection against locking yourself out
 - Docker: create, start, stop and delete containers from a form or a template, logs, CPU and memory, images
-- Files: browse the server's disk, download, upload, rename, delete (see [Server file browser](#server-file-browser))
+- Files: file manager for the server's disk: open folders, download, upload, edit text files, copy, cut and paste, rename, delete (see [Server file browser](#server-file-browser))
 - FTP: browse saved FTP servers, download, upload, create folders and delete (see [FTP browser](#ftp-browser))
 
 **Notifications**
@@ -463,9 +463,11 @@ Both pages live under **Server** in the menu. Every change asks for your passwor
 
 **Server > Files** shows the disk of the server with the permissions of the user the dashboard runs as. Standard library only.
 
-- Listing is free while you are logged in. Download, upload, new folders, rename and delete ask for your password and 2FA code again and are written to the audit log (with the full path).
-- Careful defaults: delete only removes files and empty folders (never recursive), upload and rename never overwrite, folders directly under `/` cannot be deleted or renamed, deleting a symlink removes the link and not its target.
-- Download is capped at 50 MB and upload at 8 MB (the whole file goes through memory). Listings stop at 2000 entries.
+- Click a folder row to open it; breadcrumbs and shortcuts (`/root`, `/home`, `/srv` ...) jump around. Text files up to 1 MB open in an editor (**Edit**), folders and files can be **copied or cut** and pasted into another folder, renamed and deleted.
+- Listing is free while you are logged in. Everything else (download, edit, upload, new files and folders, copy, move, rename, delete) asks for your password and 2FA code again and is written to the audit log (with the full path).
+- Careful defaults: copy, upload, rename and move never overwrite (a copy with a taken name becomes `name Kopie.ext`), folders directly under `/` cannot be deleted, moved or renamed, deleting a symlink removes the link and not its target, deleting a folder removes everything inside (the confirmation says so) but never a mounted drive and never the folder that holds the dashboard itself.
+- Devices, pipes and sockets are neither downloaded nor copied. Move works inside one drive only (across drives: copy, then delete).
+- Limits: download 50 MB, upload 8 MB, copy 500 MB, edit 1 MB (all go through memory). Saving a text file writes in place and is not atomic. Listings stop at 2000 entries.
 - Anyone who can pass the step-up can read secrets on the disk, including the dashboard's own `credentials.json`. Keep 2FA on.
 - Environment values are never shown in the confirmation dialog or written to the audit log.
 

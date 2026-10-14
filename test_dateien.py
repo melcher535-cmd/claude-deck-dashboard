@@ -2,7 +2,8 @@ import base64
 import os
 import tempfile
 
-from dateien import MAX_UPLOAD, Dateien, clean_path
+import dateien
+from dateien import MAX_TEXT, MAX_UPLOAD, Dateien, clean_path
 
 
 def expect_error(fn, *args):
@@ -99,3 +100,96 @@ def test_mkdir_creates_folder_and_refuses_duplicates():
 
 def test_post_routes_unknown_paths_to_none():
     assert Dateien().post("/api/ftp/ordner", {}) is None and Dateien().post("/api/dateien/unbekannt", {}) is None
+
+
+def test_ls_shows_permissions():
+    d, root = make()
+    assert d.ls({"pfad": [root]})["eintraege"][0]["rechte"].startswith("d")
+
+
+def test_download_refuses_device_files_instead_of_reading_forever():
+    d, _ = make()
+    assert expect_error(d.download, {"pfad": ["/dev/zero"]}) == "Keine normale Datei"
+
+
+def test_copy_file_into_folder_and_name_clash_gets_a_suffix():
+    d, root = make()
+    post(d, "kopieren", pfad=f"{root}/b.txt", ziel=f"{root}/ordner")
+    post(d, "kopieren", pfad=f"{root}/b.txt", ziel=f"{root}/ordner")
+    r = post(d, "kopieren", pfad=f"{root}/b.txt", ziel=f"{root}/ordner")[1]
+    assert open(f"{root}/ordner/b.txt").read() == "zwei" and os.path.exists(f"{root}/ordner/b Kopie.txt") and r["name"] == "b Kopie 2.txt"
+    assert open(f"{root}/b.txt").read() == "zwei"
+
+
+def test_copy_folder_recursively_keeps_symlinks_as_links():
+    d, root = make()
+    os.symlink("a.txt", f"{root}/ordner/rel")
+    os.mkdir(f"{root}/ziel")
+    post(d, "kopieren", pfad=f"{root}/ordner", ziel=f"{root}/ziel")
+    assert open(f"{root}/ziel/ordner/a.txt").read() == "hallo" and os.path.islink(f"{root}/ziel/ordner/rel")
+
+
+def test_copy_folder_into_itself_is_refused_and_leaves_nothing_behind():
+    d, root = make()
+    assert "sich selbst" in expect_error(d.post, "/api/dateien/kopieren", {"pfad": f"{root}/ordner", "ziel": f"{root}/ordner/leer"})
+    assert os.listdir(f"{root}/ordner/leer") == []
+
+
+def test_copy_refuses_missing_target_folder_and_special_files():
+    d, root = make()
+    assert "Zielordner" in expect_error(d.post, "/api/dateien/kopieren", {"pfad": f"{root}/b.txt", "ziel": f"{root}/nix"})
+    assert "Sonder" in expect_error(d.post, "/api/dateien/kopieren", {"pfad": "/dev/zero", "ziel": root})
+
+
+def test_copy_refuses_folders_containing_special_files():
+    d, root = make()
+    os.mkfifo(f"{root}/ordner/pipe")
+    os.mkdir(f"{root}/zwei")
+    assert "Sonder" in expect_error(d.post, "/api/dateien/kopieren", {"pfad": f"{root}/ordner", "ziel": f"{root}/zwei"})
+
+
+def test_move_moves_file_and_folder_and_never_replaces():
+    d, root = make()
+    os.mkdir(f"{root}/ziel")
+    post(d, "verschieben", pfad=f"{root}/b.txt", ziel=f"{root}/ziel")
+    post(d, "verschieben", pfad=f"{root}/ordner", ziel=f"{root}/ziel")
+    assert os.path.exists(f"{root}/ziel/b.txt") and os.path.exists(f"{root}/ziel/ordner/a.txt") and not os.path.exists(f"{root}/b.txt")
+    open(f"{root}/b.txt", "w").write("neu")
+    assert "schon" in expect_error(d.post, "/api/dateien/verschieben", {"pfad": f"{root}/b.txt", "ziel": f"{root}/ziel"}) and open(f"{root}/ziel/b.txt").read() == "zwei"
+
+
+def test_move_folder_into_itself_and_top_level_are_refused():
+    d, root = make()
+    assert "sich selbst" in expect_error(d.post, "/api/dateien/verschieben", {"pfad": f"{root}/ordner", "ziel": f"{root}/ordner/leer"})
+    assert "geschuetzt" in expect_error(d.post, "/api/dateien/verschieben", {"pfad": "/etc", "ziel": root})
+
+
+def test_recursive_delete_removes_a_full_folder_but_not_through_symlinks():
+    d, root = make()
+    os.symlink(f"{root}/b.txt", f"{root}/ordner/zeigt-nach-aussen")
+    assert expect_error(d.post, "/api/dateien/loeschen", {"pfad": f"{root}/ordner"}) and os.path.exists(f"{root}/ordner/a.txt")
+    post(d, "loeschen", pfad=f"{root}/ordner", rekursiv=True)
+    assert not os.path.exists(f"{root}/ordner") and open(f"{root}/b.txt").read() == "zwei"
+
+
+def test_recursive_delete_refuses_the_folder_that_holds_the_dashboard():
+    d, root = make()
+    old, dateien.HERE = dateien.HERE, f"{root}/ordner"
+    try:
+        assert "Dashboard" in expect_error(d.post, "/api/dateien/loeschen", {"pfad": f"{root}/ordner", "rekursiv": True})
+    finally:
+        dateien.HERE = old
+    assert os.path.exists(f"{root}/ordner/a.txt")
+
+
+def test_save_replaces_text_keeps_mode_and_checks_input():
+    d, root = make()
+    os.chmod(f"{root}/b.txt", 0o640)
+    post(d, "speichern", pfad=f"{root}/b.txt", text="neuer Text mit \u00fc")
+    assert open(f"{root}/b.txt", encoding="utf-8").read() == "neuer Text mit \u00fc" and os.stat(f"{root}/b.txt").st_mode & 0o777 == 0o640
+    post(d, "speichern", pfad=f"{root}/b.txt", text="kurz")
+    assert open(f"{root}/b.txt").read() == "kurz"
+    assert "existiert nicht" in expect_error(d.post, "/api/dateien/speichern", {"pfad": f"{root}/nix", "text": "x"})
+    assert "existiert nicht" in expect_error(d.post, "/api/dateien/speichern", {"pfad": f"{root}/ordner", "text": "x"})
+    assert expect_error(d.post, "/api/dateien/speichern", {"pfad": f"{root}/b.txt"}) == "Text fehlt"
+    assert "groesser" in expect_error(d.post, "/api/dateien/speichern", {"pfad": f"{root}/b.txt", "text": "x" * (MAX_TEXT + 1)})
